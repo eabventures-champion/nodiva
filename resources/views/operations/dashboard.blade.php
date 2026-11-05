@@ -6,7 +6,7 @@
     <div x-data="{ showHospitalsModal: false, showLabsModal: false, showCorporateModal: false, showReferralsModal: false, selectedHospital: null, selectedLab: null }" class="space-y-6">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="space-y-1">
-                <h1 class="text-2xl font-bold text-[#102A36]">Central Network Operations Console</h1>
+                <h1 class="text-xl sm:text-2xl font-bold text-[#102A36]">Central Network Operations Console</h1>
                 <p class="text-xs text-[#61727D]">Real-time coordination layer across hospitals, testing laboratories, and corporate programs.</p>
             </div>
             @if (auth()->user()?->isCto())
@@ -19,7 +19,7 @@
         </div>
 
         <!-- Stat Metric Boxes -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div @click="showHospitalsModal = true" class="bg-white p-4 border border-[#D5DEDF] hover:border-[#167C78] cursor-pointer transition group shadow-xs">
                 <div class="flex items-center justify-between">
                     <div class="text-[11px] font-bold text-[#102A36] uppercase tracking-wider group-hover:text-[#167C78]">Connected Hospitals</div>
@@ -56,8 +56,10 @@
 
     <!-- Network Active Orders Table -->
     <div class="bg-white border border-[#D5DEDF]">
-        <div class="px-6 py-4 border-b border-[#D5DEDF] flex justify-between items-center">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#D5DEDF] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
             <h2 class="text-xs font-bold text-[#102A36] uppercase tracking-wider">Live Network Referral Activity</h2>
+            <span class="text-[11px] sm:text-xs text-[#61727D]">Pseudonymized operational view (Zero PII leakage)</span>
+        </div>
             <span class="text-xs text-[#61727D]">Pseudonymized operational view (Zero PII leakage)</span>
         </div>
 

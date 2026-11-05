@@ -17,7 +17,7 @@
 
 
         <!-- Stat Metric Boxes -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <div class="bg-white p-4 border border-[#D5DEDF]">
                 <div class="text-[11px] font-bold text-[#102A36] uppercase tracking-wider">Active Screening Programs</div>
                 <div class="text-2xl font-bold text-[#102A36] mt-1">{{ $counts['active_programs'] }}</div>
@@ -45,9 +45,9 @@
 
         <!-- Active Programs Table -->
         <div class="bg-white border border-[#D5DEDF]">
-            <div class="px-6 py-4 border-b border-[#D5DEDF] flex justify-between items-center">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#D5DEDF] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
                 <h2 class="text-xs font-bold text-[#102A36] uppercase tracking-wider">Screening Programs</h2>
-                <span class="text-xs text-[#61727D]">{{ $programs->count() }} active program(s)</span>
+                <span class="text-[11px] sm:text-xs text-[#61727D]">{{ $programs->count() }} active program(s)</span>
             </div>
 
             <div class="overflow-x-auto">
