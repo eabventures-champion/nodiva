@@ -175,12 +175,17 @@ class TeamController extends Controller
     {
         $this->authorizeAdmin();
 
-        if (! auth()->user()?->isCto()) {
-            abort(403, 'Privilege Denied: Only the Chief Technical Officer has the privilege to remove or delete team members.');
+        $currentUser = auth()->user();
+        if (! $currentUser?->isCto() && ! $currentUser?->isPlatformAdmin()) {
+            abort(403, 'Privilege Denied: Only the Chief Technical Officer / Platform Administrator has the privilege to remove or delete team members.');
         }
 
-        if ($membership->user->isCto()) {
-            return back()->with('error', 'Privilege Denied: The Chief Technical Officer account cannot be removed or deleted.');
+        if ($membership->user->isCto() || $membership->user->email === 'admin@nodiva.com') {
+            return back()->with('error', 'Privilege Denied: The Root Chief Technical Officer account is root-protected and cannot be removed.');
+        }
+
+        if ($membership->user_id === $currentUser->id) {
+            return back()->with('error', 'Privilege Denied: You cannot remove your own account from the Operations Console.');
         }
 
         $user = $membership->user;
@@ -206,19 +211,22 @@ class TeamController extends Controller
     {
         $this->authorizeAdmin();
 
-        if ($invitation->status !== 'pending') {
-            return back()->with('error', 'This invitation is no longer active.');
+        if ($invitation->status === 'pending') {
+            $invitation->status = 'revoked';
+            $invitation->save();
+            $msg = "Invitation for {$invitation->email} has been revoked.";
+        } else {
+            $email = $invitation->email;
+            $invitation->delete();
+            $msg = "Invitation record for {$email} removed.";
         }
-
-        $invitation->status = 'revoked';
-        $invitation->save();
 
         $actor = Actor::for(auth()->user(), $this->current->organization());
         $this->audit->log('staff.invitation_revoked', $invitation, [
             'email' => $invitation->email,
         ], 'success', $actor);
 
-        return back()->with('success', "Invitation for {$invitation->email} has been revoked.");
+        return back()->with('success', $msg);
     }
 
     public function resendInvitation(OrganizationInvitation $invitation)

@@ -167,7 +167,7 @@
                                     </span>
                                 </td>
 
-                                <td class="px-6 py-3.5 text-right space-x-2">
+                                <td class="px-6 py-3.5 text-right space-x-2.5 whitespace-nowrap">
                                     @if ($member->user->isCto() && $member->user_id !== auth()->id())
                                         <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#61727D] px-2.5 py-1 bg-[#F5F3ED] border border-[#D5DEDF] rounded-xs cursor-not-allowed select-none" 
                                               title="The Chief Technical Officer role is root-protected and cannot be edited by any Platform Administrator.">
@@ -179,9 +179,23 @@
                                     @else
                                         <button type="button" 
                                                 @click="openEditModal({{ json_encode($member) }})"
-                                                class="text-xs font-semibold text-[#167C78] hover:underline">
+                                                class="text-xs font-semibold text-[#167C78] hover:underline cursor-pointer">
                                             Edit Menus & Role
                                         </button>
+
+                                        @if ((auth()->user()->isCto() || auth()->user()->isPlatformAdmin()) && $member->user_id !== auth()->id() && ! $member->user->isCto())
+                                            <span class="text-[#D5DEDF]">|</span>
+                                            <form action="{{ route('ops.team.destroy', $member) }}" method="POST" class="inline"
+                                                  onsubmit="return confirm('Are you sure you want to permanently remove {{ addslashes($member->user->name) }} ({{ addslashes($member->user->email) }}) from the Operations Console? Their console access and credentials will be revoked immediately.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" 
+                                                        class="text-xs font-semibold text-[#B42332] hover:text-red-700 hover:underline cursor-pointer"
+                                                        title="Revoke console credentials and remove this team member">
+                                                    Remove Member
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>
@@ -283,7 +297,18 @@
                                             </button>
                                         </form>
                                     @else
-                                        <span class="text-[11px] text-[#61727D]">—</span>
+                                        @if (auth()->user()->isCto() || auth()->user()->isPlatformAdmin())
+                                            <form method="POST" action="{{ route('ops.team.invitations.revoke', $invitation) }}" class="inline"
+                                                  onsubmit="return confirm('Remove this invitation record from history?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-xs font-semibold text-[#61727D] hover:text-[#B42332] hover:underline cursor-pointer" title="Clear this record">
+                                                    Clear Record
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-[11px] text-[#61727D]">—</span>
+                                        @endif
                                     @endif
                                 </td>
                             </tr>
@@ -552,17 +577,37 @@
                         </div>
                     </div>
 
-                    <div class="pt-3 border-t border-[#D5DEDF] flex justify-end gap-3">
-                        <button type="button" @click="editModalOpen = false" 
-                                class="px-4 py-2 border border-[#D5DEDF] text-[#102A36] hover:bg-[#F5F3ED] font-bold rounded-sm">
-                            Cancel
-                        </button>
-                        <button type="submit" 
-                                class="px-5 py-2 bg-[#167C78] hover:bg-[#126461] text-white font-bold rounded-sm shadow-sm">
-                            Save Changes &rarr;
-                        </button>
+                    <div class="pt-3 border-t border-[#D5DEDF] flex items-center justify-between">
+                        <div>
+                            @if (auth()->user()->isCto() || auth()->user()->isPlatformAdmin())
+                                <template x-if="selectedMember && selectedMember.user_id !== {{ auth()->id() }} && !selectedMember.user?.is_cto">
+                                    <button type="button" 
+                                            @click="if(confirm('Are you sure you want to permanently remove ' + selectedMember.user.name + ' (' + selectedMember.user.email + ') from the Operations Console? Their credentials will be revoked immediately.')) { $refs.modalDeleteForm.submit(); }"
+                                            class="text-xs font-semibold text-[#B42332] hover:text-red-700 hover:underline cursor-pointer">
+                                        &times; Remove Team Member
+                                    </button>
+                                </template>
+                            @endif
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" @click="editModalOpen = false" 
+                                    class="px-4 py-2 border border-[#D5DEDF] text-[#102A36] hover:bg-[#F5F3ED] font-bold rounded-sm cursor-pointer">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-5 py-2 bg-[#167C78] hover:bg-[#126461] text-white font-bold rounded-sm shadow-sm cursor-pointer">
+                                Save Changes &rarr;
+                            </button>
+                        </div>
                     </div>
                 </form>
+
+                @if (auth()->user()->isCto() || auth()->user()->isPlatformAdmin())
+                    <form x-ref="modalDeleteForm" :action="'/ops/team/' + (selectedMember ? selectedMember.id : '')" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                @endif
             </div>
         </div>
 

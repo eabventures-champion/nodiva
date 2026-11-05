@@ -19,6 +19,8 @@ class User extends Authenticatable
 
     protected $hidden = ['password', 'remember_token', 'mfa_secret'];
 
+    protected $appends = ['is_cto'];
+
     protected function casts(): array
     {
         return [
@@ -91,6 +93,24 @@ class User extends Authenticatable
         return str_contains($title, 'chief technical officer')
             || preg_match('/\bcto\b/i', $title) === 1
             || $this->email === 'admin@nodiva.com';
+    }
+
+    public function getIsCtoAttribute(): bool
+    {
+        return $this->isCto();
+    }
+
+    public function isPlatformAdmin(): bool
+    {
+        if ($this->isCto()) {
+            return true;
+        }
+
+        return $this->memberships()
+            ->whereHas('organization', fn ($q) => $q->where('type', 'platform'))
+            ->whereHas('role', fn ($q) => $q->where('is_admin', true))
+            ->where('status', 'active')
+            ->exists();
     }
 
     public function dashboardRoute(): string
