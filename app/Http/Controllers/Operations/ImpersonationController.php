@@ -49,6 +49,7 @@ class ImpersonationController extends Controller
         // Retain original CTO session identifier
         session(['impersonated_by' => $cto->id]);
         session(['active_membership_id' => $membership->id]);
+        session(['impersonation_return_to' => $request->query('return_to') ?: url()->previous()]);
 
         // Audit Log
         $actor = Actor::for($cto, $this->current->organization());
@@ -147,7 +148,9 @@ class ImpersonationController extends Controller
             ], 'success', $actor);
         }
 
-        return redirect()->route('ops.partners.index')
+        $returnUrl = session()->pull('impersonation_return_to') ?: route('ops.team.index');
+
+        return redirect($returnUrl)
             ->with('success', "Exited impersonation session. Returned to Operations Network Console as Chief Technical Officer.");
     }
 }
