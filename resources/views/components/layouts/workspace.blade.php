@@ -177,22 +177,5 @@
             </div>
         </main>
     </div>
-            <div class="max-w-6xl mx-auto space-y-6">
-                @if (session('success'))
-                    <div class="p-3 bg-[#247451]/10 border border-[#247451]/30 text-xs font-semibold text-[#247451] flex items-center gap-2">
-                        <svg class="w-4 h-4 text-[#247451] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        <span>{{ session('success') }}</span>
-                    </div>
-                @endif
-                @if (session('error'))
-                    <div class="p-3 bg-[#B42332]/10 border border-[#B42332]/30 text-xs font-semibold text-[#B42332] flex items-center gap-2">
-                        <svg class="w-4 h-4 text-[#B42332] shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                        <span>{{ session('error') }}</span>
-                    </div>
-                @endif
-                {{ $slot }}
-            </div>
-        </main>
-    </div>
 </body>
 </html>
