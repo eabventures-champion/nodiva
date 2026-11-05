@@ -10,7 +10,7 @@
     }
 @endphp
 
-<aside class="w-64 flex-shrink-0 bg-white border-r border-[#D5DEDF] flex flex-col justify-between py-6 h-full lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] overflow-y-auto self-start">
+<aside class="w-64 flex-shrink-0 bg-white border-r border-[#D5DEDF] flex flex-col justify-between py-6 h-full overflow-y-auto">
     <nav class="space-y-1 px-4 text-xs font-semibold">
         <a href="{{ route('hospital.dashboard') }}" 
            class="block px-3 py-2 rounded-sm {{ $active === 'dashboard' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">

@@ -4,7 +4,7 @@
     $user = auth()->user();
 @endphp
 
-<aside class="w-64 flex-shrink-0 bg-white border-r border-[#D5DEDF] flex flex-col justify-between py-6 h-full lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] overflow-y-auto self-start">
+<aside class="w-64 flex-shrink-0 bg-white border-r border-[#D5DEDF] flex flex-col justify-between py-6 h-full overflow-y-auto">
     <nav class="space-y-1 px-4 text-xs font-semibold">
         @if ($user?->canAccessMenu('ops.orders.monitor'))
             <a href="{{ route('ops.dashboard') }}" 
