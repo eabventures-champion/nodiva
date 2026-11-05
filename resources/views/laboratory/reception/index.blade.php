@@ -80,19 +80,38 @@
                                     </span>
                                 @endif
                             </div>
-                            <div class="text-xs text-[#102A36]">
-                                Referring Institution: <strong>{{ $order->requestingOrganization?->name }}</strong>
+                            <div class="text-xs text-[#102A36] flex items-center gap-2">
+                                <span>Referring Institution: <strong>{{ $order->requestingOrganization?->name }}</strong></span>
+                                @if ($order->requestingOrganization)
+                                    <a href="{{ route('lab.communications.create', ['partner_id' => $order->requestingOrganization->id]) }}" 
+                                       class="inline-flex items-center gap-1 text-[11px] text-[#167C78] hover:underline font-semibold">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                        <span>Message Hospital</span>
+                                    </a>
+                                @endif
                             </div>
                             <div class="text-xs text-[#61727D]">
                                 Tests: <strong>{{ $order->items->pluck('test.name')->join(', ') }}</strong> • Indication: <em>{{ $order->clinical_indication }}</em>
                             </div>
+
+                            @if ($order->collection_method === 'courier')
+                                <div class="mt-2 text-[11px] text-[#61727D] flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-[#167C78]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                    <span>Transport: <strong>Hospital Cold-Chain Courier Handover</strong> (Specimens collected at referring facility)</span>
+                                </div>
+                            @else
+                                <div class="mt-2 text-[11px] text-[#167C78] flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    <span>Transport: <strong>Patient Direct Walk-In</strong></span>
+                                </div>
+                            @endif
                         </div>
 
-                        <form action="{{ route('lab.orders.accept', $order) }}" method="POST">
+                        <form id="accept-order-{{ $order->id }}" action="{{ route('lab.orders.accept', $order) }}" method="POST">
                             @csrf
-                            <button type="submit" class="px-4 py-2 {{ $isBroadcast ? 'bg-[#102A36] hover:bg-[#193B49]' : 'bg-[#167C78] hover:bg-[#136663]' }} text-white text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center gap-1.5">
+                            <button type="submit" class="px-4 py-2.5 {{ $isBroadcast ? 'bg-[#102A36] hover:bg-[#193B49]' : 'bg-[#167C78] hover:bg-[#136663]' }} text-white text-xs font-bold uppercase tracking-wider transition shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer">
                                 @if ($isBroadcast)
-                                    <span>Claim & Accept Referral &rarr;</span>
+                                    <span>Claim Referral & Confirm &rarr;</span>
                                 @else
                                     <span>Accept Referral Order &rarr;</span>
                                 @endif
@@ -142,7 +161,16 @@
                         <tr class="hover:bg-[#E8F0EF]/40 transition">
                             <td class="px-6 py-3.5 font-mono font-bold text-[#102A36]">{{ $sp->identifier }}</td>
                             <td class="px-6 py-3.5 font-mono text-[#167C78] font-bold">{{ $sp->order->reference }}</td>
-                            <td class="px-6 py-3.5">{{ $sp->order->requestingOrganization?->name }}</td>
+                            <td class="px-6 py-3.5">
+                                <div class="font-medium text-[#102A36]">{{ $sp->order->requestingOrganization?->name ?? 'Hospital' }}</div>
+                                @if ($sp->order->requestingOrganization)
+                                    <a href="{{ route('lab.communications.create', ['partner_id' => $sp->order->requestingOrganization->id]) }}" 
+                                       class="inline-flex items-center gap-1 text-[10px] text-[#167C78] hover:underline">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                                        <span>Message</span>
+                                    </a>
+                                @endif
+                            </td>
                             <td class="px-6 py-3.5 font-bold text-[#102A36]">{{ $sp->type?->container }}</td>
                             <td class="px-6 py-3.5 text-[#61727D] capitalize">{{ $sp->type?->transport_requirements }}</td>
                             <td class="px-6 py-3.5">

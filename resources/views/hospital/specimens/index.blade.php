@@ -5,10 +5,25 @@
 
     <div x-data="{
         dispatchModalOpen: false,
-        selectedOrderId: '',
+        selectedOrderId: '{{ $readyToDispatchOrders->first()?->id ?? '' }}',
+        ordersData: @js($readyOrdersData ?? []),
         carrierName: 'Medical Express Courier (Ghana)',
         trackingRef: 'MX-GH-' + Math.floor(10000 + Math.random() * 90000),
-        pickupLocation: 'Ridge Specialist Hospital — Central Specimen Handover Bay'
+        pickupLocation: '{{ $organization->name }} — Central Specimen Handover Bay',
+        dispatchFee: '{{ $readyToDispatchOrders->first()?->logistics_charge ?? '35.00' }}',
+        openDispatchFor(orderId) {
+            this.selectedOrderId = String(orderId);
+            this.syncSelectedOrder();
+            this.dispatchModalOpen = true;
+        },
+        syncSelectedOrder() {
+            if (this.selectedOrderId && this.ordersData[this.selectedOrderId]) {
+                this.dispatchFee = this.ordersData[this.selectedOrderId].logistics_charge;
+            }
+        },
+        get selectedOrderInfo() {
+            return this.ordersData[this.selectedOrderId] || null;
+        }
     }">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -117,21 +132,36 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-3.5 text-[#102A36] font-medium">
-                                    {{ $sp->order->laboratory?->name ?? 'Matching...' }}
+                                    @if ($sp->order->laboratory)
+                                        {{ $sp->order->laboratory->name }}
+                                    @else
+                                        <span class="text-amber-700 text-xs font-semibold inline-flex items-center gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                            Open Broadcast (Matching...)
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-3.5 text-right font-medium">
                                     @if ($sp->status->value === 'pending_collection')
                                         <form action="{{ route('hospital.specimens.collect', $sp) }}" method="POST" class="inline">
                                             @csrf
-                                            <button type="submit" class="px-3 py-1 bg-[#167C78] hover:bg-[#136663] text-white text-[11px] font-bold uppercase transition">
+                                            <button type="submit" class="px-3 py-1 bg-[#167C78] hover:bg-[#136663] text-white text-[11px] font-bold uppercase transition cursor-pointer">
                                                 Record Collection
                                             </button>
                                         </form>
                                     @elseif ($sp->status->value === 'collected')
-                                        <button @click="selectedOrderId = '{{ $sp->order_id }}'; dispatchModalOpen = true"
-                                                class="px-3 py-1 bg-[#94611A] hover:bg-[#7d5216] text-white text-[11px] font-bold uppercase transition">
-                                            Dispatch Courier
-                                        </button>
+                                        @if ($sp->order->laboratory_id && $sp->order->status !== \App\Domain\Referrals\Enums\OrderStatus::Matching)
+                                            <button @click="openDispatchFor('{{ $sp->order_id }}')"
+                                                    class="px-3 py-1 bg-[#94611A] hover:bg-[#7d5216] text-white text-[11px] font-bold uppercase transition cursor-pointer">
+                                                Dispatch Courier
+                                            </button>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold rounded-xs" 
+                                                  title="This open broadcast referral is awaiting acceptance from a partner laboratory before courier dispatch can occur.">
+                                                <svg class="w-3 h-3 text-amber-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                <span>Awaiting Lab Claim</span>
+                                            </span>
+                                        @endif
                                     @else
                                         <span class="text-[#61727D] text-[11px]">Tracked</span>
                                     @endif
@@ -171,14 +201,54 @@
 
                     <div>
                         <label class="block font-bold text-[#102A36] mb-1">Select Order for Specimen Handover</label>
-                        <select name="order_id" x-model="selectedOrderId" required class="w-full border border-[#D5DEDF] p-2 bg-white focus:border-[#167C78] focus:outline-none">
-                            <option value="">-- Choose referral order with collected samples --</option>
-                            @foreach ($readyToDispatchOrders as $rOrder)
-                                <option value="{{ $rOrder->id }}">
-                                    {{ $rOrder->reference }} &rarr; {{ $rOrder->laboratory?->name }} ({{ $rOrder->specimens->count() }} tube(s))
-                                </option>
-                            @endforeach
-                        </select>
+                        @if ($readyToDispatchOrders->isNotEmpty())
+                            <select name="order_id" x-model="selectedOrderId" @change="syncSelectedOrder()" required class="w-full border border-[#D5DEDF] p-2 bg-white focus:border-[#167C78] focus:outline-none">
+                                <option value="">-- Choose referral order with collected samples --</option>
+                                @foreach ($readyToDispatchOrders as $rOrder)
+                                    <option value="{{ $rOrder->id }}">
+                                        {{ $rOrder->reference }} &rarr; {{ $rOrder->laboratory?->name }} ({{ $rOrder->specimens->count() }} tube(s))
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <div class="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xs">
+                                <strong>No orders currently ready for courier handover.</strong>
+                                <p class="text-[11px] text-amber-700 mt-1">Orders with collected specimens must have an assigned partner laboratory before courier dispatch can be booked. Open broadcast orders will appear here as soon as an accredited partner laboratory accepts them.</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Fulfilling Destination Info Box -->
+                    <div x-show="selectedOrderInfo" class="p-3 bg-[#F5F3ED] border border-[#D5DEDF] rounded-xs space-y-1.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-[#61727D]">Fulfilling Laboratory:</span>
+                            <span class="font-bold text-[#102A36]" x-text="selectedOrderInfo ? selectedOrderInfo.lab_name : ''"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px]">
+                            <span class="text-[#61727D]">Destination Bay:</span>
+                            <span class="text-[#102A36] font-medium" x-text="selectedOrderInfo ? selectedOrderInfo.lab_location : ''"></span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] pt-1 border-t border-[#D5DEDF]/60">
+                            <span class="text-[#61727D]">Logistics Route Proximity:</span>
+                            <span class="px-1.5 py-0.2 font-bold uppercase text-[9px] rounded-xs"
+                                  :class="selectedOrderInfo?.is_same_region ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'"
+                                  x-text="selectedOrderInfo?.is_same_region ? 'Intra-Regional Courier' : 'Inter-Regional Transit'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Logistics Dispatch Charge Determined by Handover Staff -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block font-bold text-[#102A36]">Logistics Dispatch Charge (GHS) *</label>
+                            <span class="text-[10px] text-[#61727D]" x-show="selectedOrderInfo">
+                                <span x-text="selectedOrderInfo?.is_same_region ? 'Local rate (standard GHS 35.00)' : 'Cross-region transit (standard GHS 75.00)'"></span>
+                            </span>
+                        </div>
+                        <input type="number" step="0.01" min="0" name="logistics_charge" x-model="dispatchFee" required
+                               class="w-full border border-[#D5DEDF] p-2 font-mono font-bold text-sm text-[#102A36] bg-white focus:border-[#167C78] focus:outline-none">
+                        <p class="text-[10px] text-[#61727D] mt-1">
+                            Enter the confirmed courier transportation charge for this consignment handover.
+                        </p>
                     </div>
 
                     <div>
@@ -197,10 +267,12 @@
                     </div>
 
                     <div class="pt-3 border-t border-[#D5DEDF] flex justify-end gap-3">
-                        <button type="button" @click="dispatchModalOpen = false" class="px-4 py-2 border border-[#D5DEDF] font-bold text-[#61727D]">
+                        <button type="button" @click="dispatchModalOpen = false" class="px-4 py-2 border border-[#D5DEDF] font-bold text-[#61727D] cursor-pointer">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-[#167C78] hover:bg-[#136663] text-white font-bold uppercase tracking-wider">
+                        <button type="submit" 
+                                @if ($readyToDispatchOrders->isEmpty()) disabled @endif
+                                class="px-4 py-2 @if ($readyToDispatchOrders->isEmpty()) bg-gray-400 cursor-not-allowed @else bg-[#167C78] hover:bg-[#136663] cursor-pointer @endif text-white font-bold uppercase tracking-wider transition">
                             Hand Over to Courier
                         </button>
                     </div>

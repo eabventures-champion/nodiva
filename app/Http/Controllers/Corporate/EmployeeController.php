@@ -65,7 +65,7 @@ class EmployeeController extends Controller
             'full_name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:150'],
             'phone' => ['nullable', 'string', 'max:30'],
-            'sex' => ['required', 'in:male,female,other'],
+            'sex' => ['required', 'in:male,female'],
             'birth_year' => ['nullable', 'integer', 'min:1940', 'max:2010'],
             'department' => ['required', 'string', 'max:100'],
         ]);

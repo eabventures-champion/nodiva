@@ -127,7 +127,7 @@ class ReferralOrderController extends Controller
             'last_name' => ['nullable', 'required_if:patient_mode,new', 'string', 'max:100'],
             'medical_record_number' => ['nullable', 'required_if:patient_mode,new', 'string', 'max:50'],
             'date_of_birth' => ['nullable', 'required_if:patient_mode,new', 'date', 'before:today'],
-            'sex' => ['nullable', 'required_if:patient_mode,new', 'in:male,female,other'],
+            'sex' => ['nullable', 'required_if:patient_mode,new', 'in:male,female'],
             'phone' => ['nullable', 'string', 'max:30'],
             'consent_confirmed' => ['required', 'accepted'],
             'clinical_indication' => ['required', 'string', 'max:255'],

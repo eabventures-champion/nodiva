@@ -93,17 +93,6 @@ class ReceptionController extends Controller
                 $actor
             );
 
-            // Dynamically set logistics dispatch charge based on the claiming laboratory's location
-            if ($order->collection_method === 'courier') {
-                $dispatchFee = app(\App\Domain\Logistics\LogisticsPricingService::class)
-                    ->calculateDispatchCharge($order->requestingOrganization, $org);
-                $order->logistics_charge = number_format($dispatchFee, 2, '.', '');
-                $order->save();
-
-                // Refresh financials with finalized dispatch fee
-                app(\App\Domain\Finance\FinancialCalculator::class)->calculate($order);
-            }
-
             // Expire remaining offered assignments for other candidate laboratories
             $order->assignments()
                 ->where('laboratory_id', '!=', $org->id)
@@ -118,11 +107,7 @@ class ReceptionController extends Controller
 
         $this->workflow->acceptByLaboratory($order, $actor);
 
-        $dispatchNote = ($order->collection_method === 'courier' && $order->logistics_charge)
-            ? " Logistics dispatch charge of GHS {$order->logistics_charge} applied based on facility location."
-            : '';
-
-        return redirect()->back()->with('success', "Order {$order->reference} successfully claimed and accepted! Referring hospital notified to dispatch specimens.{$dispatchNote}");
+        return redirect()->back()->with('success', "Order {$order->reference} successfully claimed and accepted! Referring hospital has been notified to hand over specimens to courier.");
     }
 
     public function receiveSpecimen(Request $request, Specimen $specimen)

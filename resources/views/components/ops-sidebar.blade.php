@@ -1,4 +1,4 @@
-@props(['active' => 'dashboard'])
+@props(['active' => 'dashboard', 'organization' => null])
 
 @php
     $user = auth()->user();
@@ -62,6 +62,19 @@
                 Security & Audit Trail
             </a>
         @endif
+
+        <a href="{{ route('ops.communications.index') }}" 
+           class="flex items-center justify-between px-3 py-2 rounded-sm {{ $active === 'communications' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">
+            <span>Communications & Notices</span>
+            @php
+                $openThreadsCount = \App\Models\CommunicationThread::where('status', 'open')->count();
+            @endphp
+            @if ($openThreadsCount > 0)
+                <span class="px-1.5 py-0.5 text-[10px] font-bold bg-[#167C78] text-white rounded-full">
+                    {{ $openThreadsCount }}
+                </span>
+            @endif
+        </a>
 
         @if ($user?->canAccessMenu('users.manage'))
             <a href="{{ route('ops.team.index') }}" 

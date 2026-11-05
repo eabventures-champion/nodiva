@@ -152,6 +152,45 @@ class Organization extends Model
         return $status;
     }
 
+    public function hasMissingQualifications(): bool
+    {
+        if (! $this->isLaboratory()) {
+            return false;
+        }
+
+        if ($this->qualifications()->count() === 0) {
+            return true;
+        }
+
+        foreach ($this->compulsoryQualificationsStatus() as $c) {
+            if (($c['status'] ?? '') === 'missing') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function missingQualificationsCount(): int
+    {
+        if (! $this->isLaboratory()) {
+            return 0;
+        }
+
+        $missing = 0;
+        foreach ($this->compulsoryQualificationsStatus() as $c) {
+            if (($c['status'] ?? '') === 'missing') {
+                $missing++;
+            }
+        }
+
+        if ($missing === 0 && $this->qualifications()->count() === 0) {
+            $missing = 1;
+        }
+
+        return $missing;
+    }
+
     public function region(): BelongsTo
     {
         return $this->belongsTo(ServiceRegion::class, 'service_region_id');

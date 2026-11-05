@@ -273,57 +273,36 @@
         <!-- CREDENTIAL CATEGORIES MANAGEMENT MODAL -->
         <div x-show="categoriesModalOpen" 
              x-cloak
-             class="fixed inset-0 z-50 overflow-y-auto" 
+             style="display: none;"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto" 
              aria-labelledby="modal-title" 
              role="dialog" 
              aria-modal="true"
              @keydown.escape.window="categoriesModalOpen = false">
-            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <!-- Background overlay -->
-                <div x-show="categoriesModalOpen" 
-                     x-transition:enter="ease-out duration-300"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     x-transition:leave="ease-in duration-200"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     class="fixed inset-0 transition-opacity bg-slate-900/60 backdrop-blur-xs" 
-                     @click="categoriesModalOpen = false" 
-                     aria-hidden="true"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <!-- Modal Panel -->
-                <div x-show="categoriesModalOpen"
-                     x-transition:enter="ease-out duration-300"
-                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave="ease-in duration-200"
-                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl border border-[#D5DEDF] rounded-xs">
-                    
-                    <!-- Modal Header -->
-                    <div class="flex items-start justify-between pb-4 border-b border-[#D5DEDF]">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h3 class="text-lg font-bold text-[#102A36]" id="modal-title">
-                                    Laboratory Credential Categories & Approval Policy
-                                </h3>
-                                <span class="bg-[#167C78]/10 text-[#167C78] text-[11px] font-bold px-2 py-0.5 rounded-xs border border-[#167C78]/30">
-                                    {{ $categories->count() }} Categories
-                                </span>
-                            </div>
-                            <p class="text-xs text-[#61727D] mt-1 max-w-2xl">
-                                Configure the credential types laboratories can upload. Categories flagged as <strong>Compulsory for Approval</strong> are strictly mandatory: laboratories cannot accept referrals or operate until an authorized document for that category is verified by Operations.
-                            </p>
+            <div @click.away="categoriesModalOpen = false"
+                 class="relative bg-white border border-[#D5DEDF] max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto rounded-xs my-auto text-left">
+                
+                <!-- Modal Header -->
+                <div class="flex items-start justify-between pb-4 border-b border-[#D5DEDF]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-bold text-[#102A36]" id="modal-title">
+                                Laboratory Credential Categories & Approval Policy
+                            </h3>
+                            <span class="bg-[#167C78]/10 text-[#167C78] text-[11px] font-bold px-2 py-0.5 rounded-xs border border-[#167C78]/30">
+                                {{ $categories->count() }} Categories
+                            </span>
                         </div>
-                        <button type="button" 
-                                @click="categoriesModalOpen = false"
-                                class="text-[#61727D] hover:text-[#102A36] p-1 transition cursor-pointer">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
+                        <p class="text-xs text-[#61727D] mt-1 max-w-2xl">
+                            Configure the credential types laboratories can upload. Categories flagged as <strong>Compulsory for Approval</strong> are strictly mandatory: laboratories cannot accept referrals or operate until an authorized document for that category is verified by Operations.
+                        </p>
                     </div>
+                    <button type="button" 
+                            @click="categoriesModalOpen = false"
+                            class="text-[#61727D] hover:text-[#102A36] p-1 transition cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
 
                     <!-- Category Management Action Bar -->
                     <div class="py-4 flex items-center justify-between">
@@ -532,5 +511,4 @@
                 </div>
             </div>
         </div>
-    </div>
 </x-layouts.workspace>

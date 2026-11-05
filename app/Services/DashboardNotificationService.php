@@ -124,6 +124,31 @@ class DashboardNotificationService
                         'icon' => 'order',
                     ];
                 }
+
+                // 4. Partner Communications & Replies
+                $commThreads = \App\Models\CommunicationThread::with(['messages.user', 'messages.organization'])
+                    ->where('status', 'open')
+                    ->orderByDesc('last_message_at')
+                    ->take(5)
+                    ->get();
+
+                foreach ($commThreads as $thread) {
+                    $lastMsg = $thread->messages->last();
+                    if ($lastMsg && (! $lastMsg->organization || ! $lastMsg->organization->isPlatform())) {
+                        $orgName = $lastMsg->organization?->name ?? 'Partner Institution';
+                        $items[] = [
+                            'id' => 'comm_' . $thread->id . '_' . $lastMsg->id,
+                            'type' => 'communication',
+                            'badge' => $thread->priority === 'urgent' ? 'URGENT MSG' : 'PARTNER REPLY',
+                            'badge_class' => $thread->priorityBadgeClass(),
+                            'title' => 'Message: ' . $thread->subject,
+                            'message' => $orgName . ': ' . \Illuminate\Support\Str::limit($lastMsg->message, 70),
+                            'time' => $lastMsg->created_at?->diffForHumans() ?? 'Recently',
+                            'url' => route('ops.communications.show', $thread),
+                            'icon' => 'chat',
+                        ];
+                    }
+                }
             } elseif ($organization->isHospital()) {
                 // 1. Completed diagnostic results ready for inspection & download
                 $completed = ReferralOrder::with('laboratory')
@@ -196,6 +221,21 @@ class DashboardNotificationService
                     ];
                 }
             } elseif ($organization->isLaboratory()) {
+                // 0. Alert for Missing Laboratory Accreditations / Licensing
+                if ($organization->hasMissingQualifications()) {
+                    $items[] = [
+                        'id' => 'lab_qual_missing_' . $organization->id,
+                        'type' => 'qualification',
+                        'badge' => 'ACTION REQUIRED',
+                        'badge_class' => 'bg-rose-50 text-rose-800 border border-rose-200/80',
+                        'title' => 'Mandatory Accreditations Missing',
+                        'message' => 'Regulatory licensing documents have not been uploaded. Upload immediately to unlock referral fulfillment.',
+                        'time' => 'Action required',
+                        'url' => route('lab.qualifications.index'),
+                        'icon' => 'shield-alert',
+                    ];
+                }
+
                 // 1. Pending offers awaiting lab acceptance (Direct assignment OR Open broadcast)
                 $pendingOffers = ReferralOrder::where(function ($q) use ($organization) {
                         $q->where('laboratory_id', $organization->id)
@@ -336,6 +376,66 @@ class DashboardNotificationService
                         'url' => route('corporate.invoices.index'),
                         'icon' => 'receipt',
                     ];
+                }
+            }
+
+            // Active Communications from Platform Ops for Non-Platform Organizations
+            if (! $organization->isPlatform()) {
+                $partnerThreads = \App\Models\CommunicationThread::with(['messages.user', 'messages.organization'])
+                    ->where('status', 'open')
+                    ->where(function ($q) use ($organization) {
+                        $q->where('recipient_organization_id', $organization->id)
+                          ->orWhere('sender_organization_id', $organization->id)
+                          ->orWhere('recipient_type', 'all_partners');
+                        if ($organization->isHospital()) {
+                            $q->orWhere('recipient_type', 'all_hospitals');
+                        } elseif ($organization->isLaboratory()) {
+                            $q->orWhere('recipient_type', 'all_laboratories');
+                        } elseif ($organization->isCorporate()) {
+                            $q->orWhere('recipient_type', 'all_corporates');
+                        }
+                    })
+                    ->orderByDesc('last_message_at')
+                    ->take(4)
+                    ->get();
+
+                $routePrefix = match(true) {
+                    $organization->isHospital() => 'hospital',
+                    $organization->isLaboratory() => 'lab',
+                    $organization->isCorporate() => 'corporate',
+                    default => 'hospital',
+                };
+
+                foreach ($partnerThreads as $thread) {
+                    $lastMsg = $thread->messages->last();
+                    if ($lastMsg && $lastMsg->organization_id !== $organization->id) {
+                        $senderOrg = $lastMsg->organization;
+                        $isFromPlatform = $senderOrg ? $senderOrg->isPlatform() : true;
+
+                        $badge = match(true) {
+                            $thread->priority === 'urgent' => 'URGENT MSG',
+                            $thread->isBroadcast() => 'NETWORK NOTICE',
+                            $isFromPlatform => 'PLATFORM NOTICE',
+                            $senderOrg?->isHospital() => 'HOSPITAL MESSAGE',
+                            $senderOrg?->isLaboratory() => 'LAB MESSAGE',
+                            $senderOrg?->isCorporate() => 'CORPORATE MESSAGE',
+                            default => 'PARTNER MESSAGE',
+                        };
+
+                        $title = ($senderOrg ? $senderOrg->name : 'NODIVA Ops') . ': ' . $thread->subject;
+
+                        $items[] = [
+                            'id' => 'comm_' . $thread->id . '_' . $lastMsg->id,
+                            'type' => 'communication',
+                            'badge' => $badge,
+                            'badge_class' => $thread->priorityBadgeClass(),
+                            'title' => $title,
+                            'message' => ($lastMsg->user?->name ? $lastMsg->user->name . ': ' : '') . \Illuminate\Support\Str::limit($lastMsg->message, 70),
+                            'time' => $lastMsg->created_at?->diffForHumans() ?? 'Recently',
+                            'url' => route($routePrefix . '.communications.show', $thread),
+                            'icon' => 'chat',
+                        ];
+                    }
                 }
             }
         } catch (\Throwable) {

@@ -27,7 +27,14 @@
     @endif
 
     <form action="{{ route('hospital.orders.store') }}" method="POST" x-data="{
-        patientMode: 'new',
+        patientMode: '{{ old('patient_mode', 'new') }}',
+        existingPatientId: '{{ old('existing_patient_id', '') }}',
+        mrn: @js(old('medical_record_number', '')),
+        firstName: @js(old('first_name', '')),
+        lastName: @js(old('last_name', '')),
+        dob: @js(old('date_of_birth', '')),
+        clinicalIndication: @js(old('clinical_indication', '')),
+        consentConfirmed: {{ old('consent_confirmed', '1') ? 'true' : 'false' }},
         searchQuery: '',
         selectedTests: @js($preselectedTestId ? [(string)$preselectedTestId] : []),
         priority: 'routine',
@@ -37,6 +44,44 @@
         labNames: @js($laboratories->pluck('name', 'id')),
         labCoverage: @js($labCoverage ?? []),
         customDirectDispatch: null,
+        get isFormValid() {
+            if (this.selectedTests.length === 0) return false;
+            if (!this.clinicalIndication || String(this.clinicalIndication).trim() === '') return false;
+            if (!this.consentConfirmed) return false;
+
+            if (this.patientMode === 'new') {
+                if (!this.mrn || String(this.mrn).trim() === '') return false;
+                if (!this.firstName || String(this.firstName).trim() === '') return false;
+                if (!this.lastName || String(this.lastName).trim() === '') return false;
+                if (!this.dob || String(this.dob).trim() === '') return false;
+            } else if (this.patientMode === 'existing') {
+                if (!this.existingPatientId) return false;
+            }
+
+            if (this.routingMode === 'direct') {
+                if (!this.specificLabId || !this.selectedLabQualified) return false;
+            }
+
+            return true;
+        },
+        get missingFieldHint() {
+            if (this.isFormValid) return null;
+            const missing = [];
+            if (this.selectedTests.length === 0) missing.push('Diagnostic test selection');
+            if (this.patientMode === 'new') {
+                if (!this.mrn || !String(this.mrn).trim()) missing.push('Hospital MRN');
+                if (!this.firstName || !String(this.firstName).trim()) missing.push('First Name');
+                if (!this.lastName || !String(this.lastName).trim()) missing.push('Last Name');
+                if (!this.dob || !String(this.dob).trim()) missing.push('Date of Birth');
+            } else if (this.patientMode === 'existing') {
+                if (!this.existingPatientId) missing.push('Patient record');
+            }
+            if (!this.clinicalIndication || !String(this.clinicalIndication).trim()) missing.push('Clinical indication');
+            if (!this.consentConfirmed) missing.push('Informed consent');
+            if (this.routingMode === 'direct' && !this.selectedLabQualified) missing.push('Qualified partner laboratory');
+
+            return 'Required before submitting: ' + missing.join(', ');
+        },
         get currentSelectedLab() {
             return this.labCoverage[this.specificLabId] || null;
         },
@@ -71,15 +116,25 @@
             if (!lab) return 0;
             return this.selectedTests.filter(testId => lab.available_test_ids.includes(String(testId))).length;
         },
-        get smartRouteMatch() {
+        get sortedSmartRouteLabs() {
             const list = this.qualifiedLabs.length > 0 ? this.qualifiedLabs : Object.values(this.labCoverage);
-            if (list.length === 0) return null;
-            const sorted = [...list].sort((a, b) => {
+            if (list.length === 0) return [];
+            return [...list].sort((a, b) => {
+                // 1. Lowest dispatch charge first (optimal match for courier cost)
+                const dispatchA = parseFloat(a.dispatch_charge) || 35.00;
+                const dispatchB = parseFloat(b.dispatch_charge) || 35.00;
+                if (dispatchA !== dispatchB) return dispatchA - dispatchB;
+
+                // 2. Intra-regional proximity
                 if (a.is_same_region && !b.is_same_region) return -1;
                 if (!a.is_same_region && b.is_same_region) return 1;
+
+                // 3. Historical reliability score
                 return parseFloat(b.reliability_score) - parseFloat(a.reliability_score);
             });
-            return sorted[0];
+        },
+        get smartRouteMatch() {
+            return this.sortedSmartRouteLabs[0] || null;
         },
         get smartRouteDispatchCharge() {
             return this.smartRouteMatch ? this.smartRouteMatch.dispatch_charge : '35.00';
@@ -93,9 +148,9 @@
         },
         get logisticsChargeSummary() {
             if (this.collectionMethod === 'walk_in') return 'GHS 0.00 (Exempt)';
-            if (this.routingMode === 'broadcast') return 'Pending Lab Acceptance';
+            if (this.routingMode === 'broadcast') return 'Pending Lab Acceptance (Location-Dependent)';
             if (this.routingMode === 'direct') return 'GHS ' + this.directDispatchCharge;
-            if (this.routingMode === 'automated') return 'GHS ' + this.smartRouteDispatchCharge;
+            if (this.routingMode === 'automated') return 'GHS ' + this.smartRouteDispatchCharge + (this.smartRouteMatch?.is_same_region ? ' (Lowest Rate)' : '');
             return 'GHS 35.00';
         }
     }" class="space-y-6">
@@ -125,11 +180,11 @@
 
                     <!-- Existing Patient Select -->
                     <div x-show="patientMode === 'existing'" class="space-y-2">
-                        <label class="block text-xs font-bold text-[#102A36]">Select Patient Record</label>
-                        <select name="existing_patient_id" class="w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none bg-white">
+                        <label class="block text-xs font-bold text-[#102A36]">Select Patient Record <span class="text-red-500">*</span></label>
+                        <select name="existing_patient_id" x-model="existingPatientId" class="w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none bg-white">
                             <option value="">-- Choose registered patient --</option>
                             @foreach ($patients as $p)
-                                <option value="{{ $p->id }}">{{ $p->reference }} — {{ $p->first_name }} {{ $p->last_name }} (MRN: {{ $p->medical_record_number }})</option>
+                                <option value="{{ $p->id }}" {{ old('existing_patient_id') == $p->id ? 'selected' : '' }}>{{ $p->reference }} — {{ $p->first_name }} {{ $p->last_name }} (MRN: {{ $p->medical_record_number }})</option>
                             @endforeach
                         </select>
                         <p class="text-[11px] text-[#61727D]">Hospital records are strictly tenant-isolated; PII is encrypted at rest using AES-256 GCM.</p>
@@ -139,7 +194,7 @@
                     <div x-show="patientMode === 'new'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-[#102A36]">Hospital MRN / File Number <span class="text-red-500">*</span></label>
-                            <input type="text" name="medical_record_number" value="{{ old('medical_record_number') }}" placeholder="e.g. MRN-2026-0842"
+                            <input type="text" name="medical_record_number" x-model="mrn" value="{{ old('medical_record_number') }}" placeholder="e.g. MRN-2026-0842"
                                    class="mt-1 w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none">
                         </div>
                         <div>
@@ -149,25 +204,24 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-[#102A36]">First Name <span class="text-red-500">*</span></label>
-                            <input type="text" name="first_name" value="{{ old('first_name') }}" placeholder="First Name"
+                            <input type="text" name="first_name" x-model="firstName" value="{{ old('first_name') }}" placeholder="First Name"
                                    class="mt-1 w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-[#102A36]">Last Name <span class="text-red-500">*</span></label>
-                            <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="Last Name"
+                            <input type="text" name="last_name" x-model="lastName" value="{{ old('last_name') }}" placeholder="Last Name"
                                    class="mt-1 w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-[#102A36]">Date of Birth <span class="text-red-500">*</span></label>
-                            <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}"
+                            <input type="date" name="date_of_birth" x-model="dob" value="{{ old('date_of_birth') }}"
                                    class="mt-1 w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-[#102A36]">Biological Sex <span class="text-red-500">*</span></label>
                             <select name="sex" class="mt-1 w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none bg-white">
-                                <option value="male" {{ old('sex') === 'male' ? 'selected' : '' }}>Male</option>
+                                <option value="male" {{ old('sex', 'male') === 'male' ? 'selected' : '' }}>Male</option>
                                 <option value="female" {{ old('sex') === 'female' ? 'selected' : '' }}>Female</option>
-                                <option value="other" {{ old('sex') === 'other' ? 'selected' : '' }}>Other / Intersex</option>
                             </select>
                         </div>
                     </div>
@@ -175,7 +229,7 @@
                     <!-- Consent Confirmation Checkbox -->
                     <div class="mt-4 pt-3 border-t border-[#D5DEDF]">
                         <label class="flex items-start gap-2.5 cursor-pointer">
-                            <input type="checkbox" name="consent_confirmed" value="1" checked required
+                            <input type="checkbox" name="consent_confirmed" x-model="consentConfirmed" value="1"
                                    class="mt-0.5 text-[#167C78] focus:ring-[#167C78] rounded-sm">
                             <span class="text-xs text-[#102A36]">
                                 <strong>Informed Referral Consent Granted:</strong> Patient has been counselled and consented in writing to external laboratory processing and specimen transport in accordance with the Ghana Data Protection Act 2012 (Act 843).
@@ -194,7 +248,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="md:col-span-2">
                             <label class="block text-xs font-bold text-[#102A36]">Clinical Indication / Suspected Diagnosis <span class="text-red-500">*</span></label>
-                            <input type="text" name="clinical_indication" value="{{ old('clinical_indication') }}"
+                            <input type="text" name="clinical_indication" x-model="clinicalIndication" value="{{ old('clinical_indication') }}"
                                    placeholder="e.g. Assessment of chronic viral hepatitis, suspected liver fibrosis"
                                    class="mt-1 w-full text-xs border border-[#D5DEDF] p-2.5 focus:border-[#167C78] focus:outline-none">
                         </div>
@@ -295,17 +349,18 @@
 
                                     <!-- Logistics Dispatch Charge Notice for Broadcast -->
                                     <div class="p-3 border rounded-sm text-xs"
-                                         :class="collectionMethod === 'courier' ? 'bg-amber-50/60 border-amber-200 text-amber-950' : 'bg-gray-50 border-gray-200 text-[#61727D]'">
+                                         :class="collectionMethod === 'courier' ? 'bg-amber-50/70 border-amber-200 text-amber-950' : 'bg-gray-50 border-gray-200 text-[#61727D]'">
                                         <div class="flex items-center justify-between">
                                             <span class="font-bold flex items-center gap-1.5">
                                                 <svg class="w-4 h-4 text-[#167C78]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
                                                 Logistics Dispatch Charge:
                                             </span>
                                             <span class="font-mono font-bold"
-                                                  x-text="collectionMethod === 'walk_in' ? 'GHS 0.00 (Exempt)' : 'Pending Acceptance (Location-Based)'"></span>
+                                                  :class="collectionMethod === 'walk_in' ? 'text-slate-600' : 'text-amber-800'"
+                                                  x-text="collectionMethod === 'walk_in' ? 'GHS 0.00 (Exempt)' : 'Determined Upon Lab Acceptance'"></span>
                                         </div>
                                         <p class="text-[11px] mt-1 text-[#61727D]" x-show="collectionMethod === 'courier'">
-                                            The dispatch charge will be dynamically set after a particular laboratory accepts the request, calculated based on the fulfilling facility's location & dispatch zone (Intra-Zone: ~GHS 35.00, Inter-Zone: ~GHS 75.00).
+                                            Because candidate laboratories are located in different cities and regions, the logistics courier charge is calculated and locked in at the moment a partner laboratory accepts the referral, based on the distance between facilities (Intra-Zone: GHS 35.00, Inter-Zone: GHS 75.00).
                                         </p>
                                         <p class="text-[11px] mt-1 text-[#61727D]" x-show="collectionMethod === 'walk_in'">
                                             Patient Direct Walk-In selected: Courier logistics charge is GHS 0.00 (exempt).
@@ -425,34 +480,90 @@
 
                                     <!-- Live Algorithm Match & Logistics Dispatch Preview -->
                                     <div x-show="routingMode === 'automated'" class="mt-3 pt-3 border-t border-[#D5DEDF] space-y-3">
-                                        <div class="p-3 bg-white border border-[#D5DEDF] space-y-2.5">
-                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#D5DEDF] pb-2">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase rounded-sm">
-                                                        Optimal Algorithm Recommendation
-                                                    </span>
-                                                    <span class="text-xs font-bold text-[#102A36]" x-text="smartRouteMatch ? smartRouteMatch.name : 'Evaluating capacity...'"></span>
+                                        <!-- Primary Optimal Match Card -->
+                                        <div class="p-3.5 bg-gradient-to-r from-emerald-50/60 to-white border border-emerald-300 rounded-sm space-y-3">
+                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200 pb-2.5">
+                                                <div class="space-y-0.5">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-bold uppercase rounded-sm tracking-wide">
+                                                            ★ Rank #1 Optimal Route
+                                                        </span>
+                                                        <span class="text-xs font-bold text-[#102A36]" x-text="smartRouteMatch ? smartRouteMatch.name : 'Evaluating network capacity...'"></span>
+                                                    </div>
+                                                    <div class="text-[11px] text-[#61727D] flex items-center gap-2">
+                                                        <span>Facility Location: <strong class="text-[#102A36]" x-text="smartRouteMatch ? (smartRouteMatch.city + ', ' + smartRouteMatch.region_name) : 'Network'"></strong></span>
+                                                        <span>•</span>
+                                                        <span>Turnaround: <strong class="text-[#102A36]" x-text="smartRouteMatch ? (smartRouteMatch.tat_hours + ' hrs') : '24 hrs'"></strong></span>
+                                                    </div>
                                                 </div>
-                                                <div class="flex items-center gap-2 text-xs">
-                                                    <span class="text-[#61727D]">Logistics Dispatch Charge:</span>
-                                                    <span class="font-mono font-bold text-[#102A36]"
-                                                          x-text="collectionMethod === 'walk_in' ? 'GHS 0.00 (Exempt)' : 'GHS ' + smartRouteDispatchCharge"></span>
+                                                <div class="sm:text-right">
+                                                    <div class="text-[10px] text-[#61727D] uppercase font-bold tracking-wider">Logistics Dispatch Charge</div>
+                                                    <div class="font-mono font-bold text-sm text-[#102A36]"
+                                                         x-text="collectionMethod === 'walk_in' ? 'GHS 0.00 (Exempt)' : 'GHS ' + smartRouteDispatchCharge"></div>
                                                 </div>
                                             </div>
 
-                                            <!-- How Automated Smart Routing Works Breakdown -->
+                                            <!-- Route & Savings Highlights -->
+                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] bg-white p-2.5 border border-emerald-200/80 rounded-sm">
+                                                <div class="flex items-center gap-2 text-[#102A36]">
+                                                    <span class="font-bold text-[#167C78]">Route:</span>
+                                                    <span class="font-medium">{{ $hospital->city ?? 'Origin' }}</span>
+                                                    <span class="text-[#61727D]">&rarr;</span>
+                                                    <span class="font-medium" x-text="smartRouteMatch ? smartRouteMatch.city : 'Destination Lab'"></span>
+                                                    <span class="px-1.5 py-0.2 text-[10px] font-bold uppercase rounded-sm"
+                                                          :class="smartRouteMatch?.is_same_region ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+                                                          x-text="smartRouteMatch?.is_same_region ? 'Intra-Regional Courier' : 'Inter-Regional Transport'"></span>
+                                                </div>
+                                                <template x-if="collectionMethod !== 'walk_in' && smartRouteMatch?.is_same_region">
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                        Optimal Local Rate: Saves GHS 40.00 vs Inter-Regional (GHS 75.00)
+                                                    </span>
+                                                </template>
+                                            </div>
+
+                                            <!-- Multi-Factor Scoring Pillars -->
                                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
                                                 <div class="p-2 bg-[#F5F3ED] border border-[#D5DEDF] space-y-0.5">
-                                                    <div class="font-bold text-[#102A36] text-[10px] uppercase text-[#167C78]">1. Proximity & Dispatch Fee</div>
-                                                    <div class="text-[#61727D]" x-text="smartRouteMatch?.is_same_region ? 'Same region (Accra) — lowest courier dispatch cost.' : 'Optimized cross-zone cold-chain courier transport.'"></div>
+                                                    <div class="font-bold text-[#102A36] text-[10px] uppercase text-[#167C78]">1. Proximity & Route Cost</div>
+                                                    <div class="text-[#61727D]" x-text="smartRouteMatch?.is_same_region ? 'Shortest courier distance in {{ $hospital->region->name ?? 'local region' }} (GHS 35.00 base rate).' : 'Cross-regional transport route optimized for temperature control.'"></div>
                                                 </div>
                                                 <div class="p-2 bg-[#F5F3ED] border border-[#D5DEDF] space-y-0.5">
                                                     <div class="font-bold text-[#102A36] text-[10px] uppercase text-[#167C78]">2. Quality & Reliability</div>
-                                                    <div class="text-[#61727D]" x-text="'Reliability score: ' + (smartRouteMatch ? smartRouteMatch.reliability_score + '%' : '98.5%') + ' • Verified HEFRA/AHPC'"></div>
+                                                    <div class="text-[#61727D]" x-text="'Reliability score: ' + (smartRouteMatch ? smartRouteMatch.reliability_score + '%' : '98.5%') + ' • HEFRA Accredited'"></div>
                                                 </div>
                                                 <div class="p-2 bg-[#F5F3ED] border border-[#D5DEDF] space-y-0.5">
-                                                    <div class="font-bold text-[#102A36] text-[10px] uppercase text-[#167C78]">3. Speed & Capacity</div>
-                                                    <div class="text-[#61727D]">Prioritizes lowest TAT target and open analyzer batch capacity.</div>
+                                                    <div class="font-bold text-[#102A36] text-[10px] uppercase text-[#167C78]">3. Batch Capacity & TAT</div>
+                                                    <div class="text-[#61727D]" x-text="'Standard target ' + (smartRouteMatch ? smartRouteMatch.tat_hours + 'h' : '24h') + ' with active analyzer queue room.'"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Candidate Dispatch Fee Ranking Table -->
+                                            <div class="pt-2 border-t border-emerald-200" x-show="sortedSmartRouteLabs.length > 1">
+                                                <div class="text-[10px] font-bold text-[#102A36] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                                                    <span>Eligible Laboratory Comparison (Sorted by Route Cost & Reliability)</span>
+                                                    <span class="text-[#61727D] font-normal" x-text="sortedSmartRouteLabs.length + ' qualified facilities'"></span>
+                                                </div>
+                                                <div class="space-y-1">
+                                                    <template x-for="(lab, idx) in sortedSmartRouteLabs" :key="lab.id">
+                                                        <div class="flex items-center justify-between p-1.5 text-[11px] rounded transition"
+                                                             :class="idx === 0 ? 'bg-emerald-100/70 font-semibold border border-emerald-300' : 'bg-white border border-[#D5DEDF] text-[#61727D]'">
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="w-4 text-center font-bold text-[10px]"
+                                                                      :class="idx === 0 ? 'text-emerald-800' : 'text-[#61727D]'"
+                                                                      x-text="'#' + (idx + 1)"></span>
+                                                                <span class="text-[#102A36]" x-text="lab.name"></span>
+                                                                <span class="text-[9px] px-1 py-0.2 rounded border"
+                                                                      :class="lab.is_same_region ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-600 border-gray-200'"
+                                                                      x-text="lab.is_same_region ? 'Local (' + lab.region_name + ')' : 'Inter-region (' + lab.region_name + ')'"></span>
+                                                            </div>
+                                                            <div class="flex items-center gap-3 font-mono text-xs">
+                                                                <span class="text-[10px] font-sans text-[#61727D]" x-text="'TAT: ' + lab.tat_hours + 'h'"></span>
+                                                                <span :class="idx === 0 ? 'text-emerald-800 font-bold' : 'text-[#102A36]'"
+                                                                      x-text="collectionMethod === 'walk_in' ? 'GHS 0.00' : 'GHS ' + lab.dispatch_charge"></span>
+                                                            </div>
+                                                        </div>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </div>
@@ -460,7 +571,7 @@
 
                                     <div class="text-[10px] text-[#167C78] flex items-center gap-1.5" x-show="selectedTests.length > 0">
                                         <svg class="w-3.5 h-3.5 text-[#167C78]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                        <span>Algorithm will score and balance load across <strong class="text-[#102A36]" x-text="qualifiedLabs.length"></strong> fulfilling accredited laboratory partner(s).</span>
+                                        <span>Algorithm automatically selects the lowest dispatch rate and highest reliability across <strong class="text-[#102A36]" x-text="qualifiedLabs.length"></strong> fulfilling accredited laboratory partner(s).</span>
                                     </div>
                                 </div>
                             </div>
@@ -518,11 +629,13 @@
                     </div>
 
                     <button type="submit" 
-                            :disabled="selectedTests.length === 0"
-                            :class="selectedTests.length === 0 ? 'opacity-50 cursor-not-allowed bg-[#61727D]' : 'bg-[#167C78] hover:bg-[#136663] text-white'"
+                            :disabled="!isFormValid"
+                            :class="!isFormValid ? 'opacity-40 cursor-not-allowed bg-[#61727D] hover:bg-[#61727D]' : 'bg-[#167C78] hover:bg-[#136663] text-white cursor-pointer'"
                             class="w-full py-3 px-4 text-xs font-bold uppercase tracking-wider transition shadow-sm">
                         Submit Diagnostic Referral
                     </button>
+                    <p x-show="missingFieldHint" x-text="missingFieldHint" class="text-[10px] text-amber-300 text-center leading-tight">
+                    </p>
                     <p class="text-[10px] text-white/50 text-center">
                         Barcoded sample custody containers will be registered automatically upon order submission.
                     </p>

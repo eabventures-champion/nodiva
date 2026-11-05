@@ -5,18 +5,21 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Corporate\DashboardController as CorporateDashboardController;
+use App\Http\Controllers\Corporate\CommunicationController as CorporateCommunicationController;
 use App\Http\Controllers\Corporate\EmployeeController as CorporateEmployeeController;
 use App\Http\Controllers\Corporate\InsightController as CorporateInsightController;
 use App\Http\Controllers\Corporate\InvoiceController as CorporateInvoiceController;
 use App\Http\Controllers\Corporate\SessionController as CorporateSessionController;
 use App\Http\Controllers\Corporate\TeamController as CorporateTeamController;
 use App\Http\Controllers\Hospital\CatalogueController as HospitalCatalogueController;
+use App\Http\Controllers\Hospital\CommunicationController as HospitalCommunicationController;
 use App\Http\Controllers\Hospital\DashboardController as HospitalDashboardController;
 use App\Http\Controllers\Hospital\InvoiceController as HospitalInvoiceController;
 use App\Http\Controllers\Hospital\ReferralOrderController as HospitalReferralOrderController;
 use App\Http\Controllers\Hospital\SpecimenController as HospitalSpecimenController;
 use App\Http\Controllers\Hospital\TeamController as HospitalTeamController;
 use App\Http\Controllers\Laboratory\CatalogueController as LabCatalogueController;
+use App\Http\Controllers\Laboratory\CommunicationController as LabCommunicationController;
 use App\Http\Controllers\Laboratory\DashboardController as LabDashboardController;
 use App\Http\Controllers\Laboratory\QualificationController as LabQualificationController;
 use App\Http\Controllers\Laboratory\ReceptionController as LabReceptionController;
@@ -25,6 +28,7 @@ use App\Http\Controllers\Laboratory\SettlementController as LabSettlementControl
 use App\Http\Controllers\Laboratory\TeamController as LabTeamController;
 use App\Http\Controllers\Operations\AuditController as OpsAuditController;
 use App\Http\Controllers\Operations\CatalogueController as OpsCatalogueController;
+use App\Http\Controllers\Operations\CommunicationController as OpsCommunicationController;
 use App\Http\Controllers\Operations\DashboardController as OpsDashboardController;
 use App\Http\Controllers\Operations\FinanceController as OpsFinanceController;
 use App\Http\Controllers\Operations\ImpersonationController as OpsImpersonationController;
@@ -44,6 +48,16 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+Route::get('/downloads/guide', function () {
+    $filePath = public_path('downloads/NODIVA_GUIDE_AND_FUNCTIONALITY.pdf');
+    if (! file_exists($filePath)) {
+        abort(404, 'Guide document not found.');
+    }
+    return response()->download($filePath, 'NODIVA_GUIDE_AND_FUNCTIONALITY.pdf', [
+        'Content-Type' => 'application/pdf',
+    ]);
+})->name('downloads.guide');
 
 // Authentication
 Route::middleware('guest')->group(function () {
@@ -100,6 +114,14 @@ Route::middleware(['auth', ResolveOrganizationContext::class])->group(function (
         Route::get('/invoices', [HospitalInvoiceController::class, 'index'])->name('invoices.index');
         Route::get('/invoices/{invoice}', [HospitalInvoiceController::class, 'show'])->name('invoices.show');
 
+        // Platform Communications
+        Route::get('/communications', [HospitalCommunicationController::class, 'index'])->name('communications.index');
+        Route::get('/communications/create', [HospitalCommunicationController::class, 'create'])->name('communications.create');
+        Route::post('/communications', [HospitalCommunicationController::class, 'store'])->name('communications.store');
+        Route::get('/communications/{thread}', [HospitalCommunicationController::class, 'show'])->name('communications.show');
+        Route::post('/communications/{thread}/reply', [HospitalCommunicationController::class, 'reply'])->name('communications.reply');
+        Route::post('/communications/{thread}/toggle-status', [HospitalCommunicationController::class, 'toggleStatus'])->name('communications.toggle-status');
+
         // Hospital Team & Access Governance
         Route::get('/team', [HospitalTeamController::class, 'index'])->name('team.index');
         Route::post('/team/invite', [HospitalTeamController::class, 'invite'])->name('team.invite');
@@ -141,6 +163,14 @@ Route::middleware(['auth', ResolveOrganizationContext::class])->group(function (
         // Settlements & Statements
         Route::get('/settlements', [LabSettlementController::class, 'index'])->name('settlements.index');
 
+        // Platform Communications
+        Route::get('/communications', [LabCommunicationController::class, 'index'])->name('communications.index');
+        Route::get('/communications/create', [LabCommunicationController::class, 'create'])->name('communications.create');
+        Route::post('/communications', [LabCommunicationController::class, 'store'])->name('communications.store');
+        Route::get('/communications/{thread}', [LabCommunicationController::class, 'show'])->name('communications.show');
+        Route::post('/communications/{thread}/reply', [LabCommunicationController::class, 'reply'])->name('communications.reply');
+        Route::post('/communications/{thread}/toggle-status', [LabCommunicationController::class, 'toggleStatus'])->name('communications.toggle-status');
+
         // Laboratory Team & Access Governance
         Route::get('/team', [LabTeamController::class, 'index'])->name('team.index');
         Route::post('/team/invite', [LabTeamController::class, 'invite'])->name('team.invite');
@@ -168,6 +198,14 @@ Route::middleware(['auth', ResolveOrganizationContext::class])->group(function (
         // Program Invoices
         Route::get('/invoices', [CorporateInvoiceController::class, 'index'])->name('invoices.index');
         Route::get('/invoices/{invoice}', [CorporateInvoiceController::class, 'show'])->name('invoices.show');
+
+        // Platform Communications
+        Route::get('/communications', [CorporateCommunicationController::class, 'index'])->name('communications.index');
+        Route::get('/communications/create', [CorporateCommunicationController::class, 'create'])->name('communications.create');
+        Route::post('/communications', [CorporateCommunicationController::class, 'store'])->name('communications.store');
+        Route::get('/communications/{thread}', [CorporateCommunicationController::class, 'show'])->name('communications.show');
+        Route::post('/communications/{thread}/reply', [CorporateCommunicationController::class, 'reply'])->name('communications.reply');
+        Route::post('/communications/{thread}/toggle-status', [CorporateCommunicationController::class, 'toggleStatus'])->name('communications.toggle-status');
 
         // Corporate Team & Access Governance
         Route::get('/team', [CorporateTeamController::class, 'index'])->name('team.index');
@@ -215,6 +253,14 @@ Route::middleware(['auth', ResolveOrganizationContext::class])->group(function (
         Route::post('/finance/settings', [OpsFinanceController::class, 'updateSettings'])->name('finance.settings');
         Route::get('/audit', [OpsAuditController::class, 'index'])->name('audit.index');
         Route::post('/system/purge-database', [OpsSystemMaintenanceController::class, 'purgeDatabase'])->name('system.purge');
+
+        // Institutional Communications & Broadcasts
+        Route::get('/communications', [OpsCommunicationController::class, 'index'])->name('communications.index');
+        Route::get('/communications/create', [OpsCommunicationController::class, 'create'])->name('communications.create');
+        Route::post('/communications', [OpsCommunicationController::class, 'store'])->name('communications.store');
+        Route::get('/communications/{thread}', [OpsCommunicationController::class, 'show'])->name('communications.show');
+        Route::post('/communications/{thread}/reply', [OpsCommunicationController::class, 'reply'])->name('communications.reply');
+        Route::post('/communications/{thread}/toggle-status', [OpsCommunicationController::class, 'toggleStatus'])->name('communications.toggle-status');
 
         // Operations Team & Access Governance
         Route::get('/team', [OpsTeamController::class, 'index'])->name('team.index');

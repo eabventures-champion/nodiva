@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NODIVA GUIDE AND FUNCTIONALITY</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 22mm 20mm 22mm 20mm;
+            @bottom-right {
+                content: counter(page);
+                font-size: 9pt;
+                color: #61727D;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #102A36;
+            background-color: #FFFFFF;
+            line-height: 1.6;
+            font-size: 10.5pt;
+            margin: 0;
+            padding: 0;
+        }
+
+        .cover-header {
+            border-bottom: 3px solid #167C78;
+            padding-bottom: 18px;
+            margin-bottom: 28px;
+        }
+
+        .network-tag {
+            font-size: 9pt;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #167C78;
+            margin-bottom: 6px;
+        }
+
+        h1 {
+            font-size: 24pt;
+            font-weight: 800;
+            color: #102A36;
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 12pt;
+            color: #61727D;
+            margin: 0 0 12px 0;
+            font-weight: 400;
+        }
+
+        .document-meta {
+            font-size: 9pt;
+            color: #61727D;
+            font-weight: 500;
+        }
+
+        h2 {
+            font-size: 14pt;
+            font-weight: 700;
+            color: #102A36;
+            border-left: 4px solid #167C78;
+            padding-left: 10px;
+            margin-top: 30px;
+            margin-bottom: 14px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 11.5pt;
+            font-weight: 700;
+            color: #167C78;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin: 0 0 12px 0;
+            text-align: justify;
+        }
+
+        ul {
+            margin: 0 0 16px 0;
+            padding-left: 22px;
+        }
+
+        li {
+            margin-bottom: 6px;
+            line-height: 1.55;
+        }
+
+        li strong {
+            color: #102A36;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .section-block {
+            margin-bottom: 20px;
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            border-top: 1px solid #D5DEDF;
+            padding-top: 14px;
+            font-size: 8.5pt;
+            color: #61727D;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cover-header">
+        <div class="network-tag">NODIVA Institutional Diagnostic Network</div>
+        <h1>NODIVA GUIDE AND FUNCTIONALITY</h1>
+        <div class="subtitle">Comprehensive Architectural Overview, Workflow Operations, and Governance Manual</div>
+        <div class="document-meta">Official Operational Guide &bull; Designed for Institutional Stakeholders &bull; Production Release</div>
+    </div>
+
+    <div class="section-block">
+        <h2>1. Executive Summary & Project Purpose</h2>
+        <p>
+            NODIVA is an integrated institutional healthcare platform built to connect hospitals, medical clinics, specialized diagnostic laboratories, and corporate employers into a single, unified diagnostic exchange. In traditional healthcare settings, referring specialized tests to third-party laboratories is hindered by manual paperwork, lost physical specimens, unknown courier arrival times, delayed diagnostic results, and opaque pricing.
+        </p>
+        <p>
+            NODIVA eliminates these systemic challenges by digitizing the entire diagnostic lifecycle. The platform coordinates clinical indication recording, automated and direct referral routing, barcoded specimen custody tracking, cold-chain courier transport, laboratory accessioning, pathologist review, and automated financial settlements. Through rigorous regulatory compliance, national data protection adherence, and transparent role-based access control, NODIVA ensures that patients receive timely, accurate diagnostic care while institutional partners maintain complete financial and clinical governance.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2>2. Core System Architecture & Platform Admins</h2>
+        <p>
+            The platform is structured into four distinct organizational portals, each designed to cater specifically to the operational, clinical, technical, or administrative responsibilities of that institution:
+        </p>
+
+        <h3>Operations Network Administrators (Platform Ops)</h3>
+        <p>
+            The Operations Portal serves as the primary governance control center for NODIVA. Operations administrators oversee network stability, enforce regulatory accreditation standards, maintain the master medical catalog, monitor cross-facility logistics, and manage platform-wide financial reconciliation.
+        </p>
+        <ul>
+            <li><strong>Institutional Partner Onboarding & Qualification:</strong> Review, verify, and approve applications from hospitals, medical clinics, specialized laboratories, and corporate employers. Verify HEFRA, AHPC, and ISO 15189 accreditation licenses before facilities can participate in the referral exchange.</li>
+            <li><strong>Master Diagnostic Test Catalogue:</strong> Maintain the centralized test registry, defining standardized specimen tube types, clinical handling instructions, stability windows, reference ranges, and benchmark pricing.</li>
+            <li><strong>Network-Wide Logistics & Dispatch Supervision:</strong> Monitor courier transit across all regions, identify delivery bottlenecks or specimen temperature risks, and maintain carrier performance metrics.</li>
+            <li><strong>Financial Governance & Automated Settlements:</strong> Audit consolidated transaction ledgers, supervise platform commission splits, review monthly payout statements, and oversee institutional debit and credit balances.</li>
+            <li><strong>Security, Access Governance & Audit Trails:</strong> Track platform user invitations, manage two-factor authentication requirements, enforce security credentials, and inspect immutable audit logs for every clinical and administrative event.</li>
+            <li><strong>Operations Communications & Directive Stream:</strong> Broadcast network-wide notices, address urgent specimen inquiries, issue regulatory alerts, and coordinate resolution across all partner organizations.</li>
+        </ul>
+
+        <h3>Hospital Administrators & Clinical Teams</h3>
+        <p>
+            The Hospital Portal equips medical doctors, clinical specialists, phlebotomists, and healthcare administrators with the tools necessary to refer diagnostic investigations seamlessly without leaving their clinical workflow.
+        </p>
+        <ul>
+            <li><strong>Patient Referral Order Creation:</strong> Generate diagnostic referral orders for newly registered or existing hospital patients with full clinical indications and physician notes.</li>
+            <li><strong>Strict Biological Sex Record Keeping:</strong> Observe strict data integrity by recording biological sex exclusively as Male or Female across all patient records and laboratory requisitions to guarantee diagnostic reference accuracy.</li>
+            <li><strong>Informed Patient Referral Consent:</strong> Record and confirm explicit patient consent for external laboratory processing and specimen transport under the Ghana Data Protection Act.</li>
+            <li><strong>Flexible Referral Routing Modes:</strong> Choose between Open Network Broadcast (first qualified lab to accept), Direct Referral (hand-picked partner laboratory), and Automated Smart Routing (algorithm-matched facility based on proximity, speed, and cost).</li>
+            <li><strong>Phlebotomy & Barcode Custody Management:</strong> Log biological specimen collections, verify container requirements (e.g., EDTA, Gold Top Gel, Heparin), and affix unique system-generated barcoded tracking identifiers.</li>
+            <li><strong>Courier Specimen Handover & Dispatch Fee Entry:</strong> Call logistics couriers, confirm the pickup bay, enter the tracking waybill, and enter the confirmed logistics dispatch transport charge based on destination location.</li>
+            <li><strong>Live Diagnostic Result Ingestion:</strong> Access finalized quantitative laboratory results, reference range indicators, clinical interpretations, and signed pathologist reports directly from the patient record.</li>
+            <li><strong>Financial Reconciliations & Invoices:</strong> Review hospital referral invoices, track laboratory processing charges, monitor dispatch transport costs, and verify statement balances.</li>
+            <li><strong>Team & Access Administration:</strong> Invite hospital doctors, nurses, and laboratory liaisons, assigning specific granular roles and departments.</li>
+            <li><strong>Inter-Facility Communication:</strong> Initiate direct communication threads with processing laboratories regarding specimen viability, urgent turnarounds, or clinical inquiries.</li>
+        </ul>
+
+        <div class="page-break"></div>
+
+        <h3>Laboratory Administrators & Technical Staff</h3>
+        <p>
+            The Laboratory Portal provides accredited diagnostic centers, pathology institutes, and reference laboratories with an end-to-end laboratory information and reception system.
+        </p>
+        <ul>
+            <li><strong>Referral Order Ingestion & Claiming:</strong> Review incoming direct referrals and claim available open network broadcasts with a single click, instantly committing analyzer capacity.</li>
+            <li><strong>Clean Intake Without Logistics Distractions:</strong> Laboratories focus purely on clinical testing; incoming referrals specify the referring hospital, required tests, and specimen collection details without burdening laboratory staff with courier transportation charges.</li>
+            <li><strong>Catalogue Management & Analyzer Capacity:</strong> Manage which diagnostic panels the facility offers, set turnaround time guarantees, update analyzer batch schedules, and declare daily processing capacity.</li>
+            <li><strong>Regulatory Licensing & Accreditation Profile:</strong> Upload and maintain certified credentials from HEFRA, AHPC, and international quality bodies, maintaining active network verification.</li>
+            <li><strong>Specimen Accessioning & Quality Verification:</strong> Scan incoming specimen barcodes upon courier arrival, verify tube container types and physical condition, confirm cold-chain integrity, or flag pre-analytical rejections with cause.</li>
+            <li><strong>Diagnostic Result Entry & Reference Ranges:</strong> Input quantitative numerical values, qualitative findings, clinical observations, and automated high/low abnormality flags.</li>
+            <li><strong>Pathologist Electronic Review & Clinical Release:</strong> Enable resident pathologists and laboratory directors to review comprehensive findings, provide medical interpretations, and apply authorized digital signatures for instant release to the referring hospital.</li>
+            <li><strong>Laboratory Earnings & Settlement Statements:</strong> Track gross referral earnings, net payouts after platform service deductions, and weekly/monthly payout statements.</li>
+            <li><strong>Laboratory Team Administration:</strong> Manage laboratory technologists, bench analysts, accessioning clerks, and consulting pathologists.</li>
+            <li><strong>Direct Clinical Communications:</strong> Chat directly with referring hospital physicians regarding specimen clarifications, critical value alerts, or clinical histories.</li>
+        </ul>
+
+        <h3>Corporate Administrators (Employee Health & Screening)</h3>
+        <p>
+            The Corporate Portal is tailored for human resource executives, occupational health officers, and corporate benefits managers seeking to coordinate health screening drives for their workforce.
+        </p>
+        <ul>
+            <li><strong>Employee Directory Management:</strong> Maintain corporate staff rosters, departments, and employee eligibility for occupational health and wellness programs.</li>
+            <li><strong>Diagnostic Screening Campaigns:</strong> Organize preventive wellness packages, pre-employment testing, and routine health checkups across departments.</li>
+            <li><strong>Voucher & Referral Issuance:</strong> Authorize employee diagnostic test vouchers redeemable at verified network hospitals or collection centers.</li>
+            <li><strong>Confidential Aggregate Analytics:</strong> Monitor overall department completion rates, wellness participation metrics, and health trend insights without compromising individual medical confidentiality.</li>
+            <li><strong>Consolidated Corporate Billing:</strong> Access transparent corporate billing statements, aggregate diagnostic invoices, and employee utilization breakdowns.</li>
+            <li><strong>Corporate HR User Governance:</strong> Manage permissions for HR managers, department heads, and wellness coordinators.</li>
+            <li><strong>Operational Inquiries & Support:</strong> Communicate directly with network operations administrators to resolve corporate screening schedules or billing questions.</li>
+        </ul>
+    </div>
+
+    <div class="section-block">
+        <h2>3. End-to-End Diagnostic Referral Workflow</h2>
+        <p>
+            The entire operational flow across the platform follows ten systematic, auditable phases:
+        </p>
+
+        <h3>Phase 1: Referral Requisition & Clinical Routing</h3>
+        <ul>
+            <li>A hospital doctor creates a referral for a patient, selecting one or more diagnostic tests from the master catalogue and providing mandatory clinical indications.</li>
+            <li>The physician selects the referral routing mode: Open Network Broadcast, Direct Partner Laboratory, or Automated Smart Routing.</li>
+            <li>The patient's informed consent is verified and recorded in compliance with data privacy mandates.</li>
+        </ul>
+
+        <h3>Phase 2: Laboratory Assignment & Acceptance</h3>
+        <ul>
+            <li>In Direct Mode, the designated laboratory receives immediate notification.</li>
+            <li>In Automated Mode, NODIVA's matching algorithm immediately pairs the order with the optimal laboratory based on geographic proximity, lowest dispatch fee, and accreditation reliability.</li>
+            <li>In Open Broadcast Mode, all qualified partner laboratories offering the requested tests receive the requisition. The first laboratory to review and click "Claim Referral & Confirm" secures the order.</li>
+        </ul>
+
+        <h3>Phase 3: Phlebotomy, Specimen Collection & Barcoding</h3>
+        <ul>
+            <li>The hospital phlebotomist draws the required biological samples (e.g., whole blood, serum, plasma, urine).</li>
+            <li>The phlebotomist marks the collection as completed, logging the collection bay, timestamp, and container tube types.</li>
+            <li>Unique system-generated barcode numbers are affixed to each specimen container, establishing an unbroken chain of custody.</li>
+        </ul>
+
+        <h3>Phase 4: Logistics Dispatch & Transport Fee Entry</h3>
+        <ul>
+            <li>Because open broadcast orders are now claimed by a specific facility, the hospital specimen custody staff knows the exact destination laboratory and distance.</li>
+            <li>The hospital phlebotomy custody desk prepares the courier consignment, selects the carrier, enters the tracking waybill, and confirms the actual logistics transport dispatch fee.</li>
+            <li>Entering the transport fee at handover ensures accurate billing reflection while saving courier costs.</li>
+        </ul>
+
+        <div class="page-break"></div>
+
+        <h3>Phase 5: Courier Cold-Chain Transit</h3>
+        <ul>
+            <li>The authorized medical courier receives the barcoded specimen consignment.</li>
+            <li>Real-time specimen custody transitions to "In Transit". Both the hospital and laboratory dashboards display live custody status, expected delivery, and transport temperature requirements.</li>
+        </ul>
+
+        <h3>Phase 6: Laboratory Accessioning & Specimen Verification</h3>
+        <ul>
+            <li>The courier arrives at the destination laboratory's specimen reception bay.</li>
+            <li>Laboratory intake staff scan the container barcode, visually check sample integrity (hemolysis, volume, clotting), and record accessioning.</li>
+            <li>If a sample is compromised, it is flagged as rejected with an explicit clinical reason, immediately alerting the referring hospital. Valid samples advance to the analyzer queue.</li>
+        </ul>
+
+        <h3>Phase 7: Diagnostic Testing & Result Entry</h3>
+        <ul>
+            <li>Medical laboratory technologists run the specimens on calibrated analyzers.</li>
+            <li>Technologists input the quantitative findings, units of measurement, reference intervals, and clinical flags into the NODIVA result interface.</li>
+        </ul>
+
+        <h3>Phase 8: Pathologist Quality Review & Sign-Off</h3>
+        <ul>
+            <li>A certified clinical pathologist or laboratory director reviews the analytical findings alongside the patient's clinical indication.</li>
+            <li>The pathologist applies their authorized digital signature and releases the report. The order status advances to completed.</li>
+        </ul>
+
+        <h3>Phase 9: Result Delivery to Referring Clinician</h3>
+        <ul>
+            <li>The hospital doctor receives instant notification that the diagnostic report is finalized.</li>
+            <li>The clinician accesses the complete diagnostic report, views color-coded clinical flags, and downloads the official PDF laboratory report for patient consultation.</li>
+        </ul>
+
+        <h3>Phase 10: Financial Clearing & Automated Reconciliation</h3>
+        <ul>
+            <li>The platform financial calculator automatically reconciles the transaction based on the test catalogue fees, confirmed logistics transport charges, and agreed institutional splits.</li>
+            <li>Itemized debit and credit records are posted to the hospital's billing ledger and the laboratory's payout statement, complete with transparent platform service fee deductions.</li>
+        </ul>
+    </div>
+
+    <div class="section-block">
+        <h2>4. Core Governance, Security & Architectural Standards</h2>
+        <ul>
+            <li><strong>Strict Biological Sex Standardization:</strong> Biological sex is strictly standardized to Male or Female across all patient records, requisitions, and laboratory analyzers. This strict binary eliminates clinical reference ambiguities and guarantees the diagnostic validity of gender-dependent biological reference ranges.</li>
+            <li><strong>Proximity-Aware Logistics Optimization:</strong> Logistics dispatch fees are structured according to regional proximity. Intra-regional transfers (within the same geographic region) are billed at the standard rate of GHS 35.00, whereas inter-regional transfers are billed at GHS 75.00. The Automated Smart Routing algorithm actively favors intra-regional facilities to save hospitals and patients GHS 40.00 per consignment.</li>
+            <li><strong>Location-Dependent Open Network Routing:</strong> For open broadcast orders, logistics dispatch charges remain uncommitted during initial creation and are finalized exclusively by the hospital custody staff upon courier handover, ensuring complete financial transparency and real-world cost alignment.</li>
+            <li><strong>Immutable Chain of Custody:</strong> Every specimen collection, courier dispatch, intake verification, and result sign-off is cryptographically logged with user identity, organization reference, and precise ISO timestamps.</li>
+            <li><strong>Integrated Two-Way Communication System:</strong> All institutional portals feature integrated communication threads. Hospitals, laboratories, corporate clients, and operations staff can discuss urgent inquiries, clinical clarifications, or operational notices with built-in thread resolution tracking.</li>
+            <li><strong>Multi-Tenancy & Data Protection:</strong> Built on robust role-based access control, ensuring that hospitals and corporate clients have access only to their authorized patient records, while laboratories receive strictly necessary de-identified clinical requisitions.</li>
+        </ul>
+    </div>
+
+    <div class="footer-note">
+        NODIVA Institutional Diagnostic Referral Network &bull; Complete System Architecture &bull; Generated for Stakeholder Presentation
+    </div>
+
+</body>
+</html>

@@ -37,6 +37,27 @@
            class="block px-3 py-2 rounded-sm {{ $active === 'invoices' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">
             Invoices & Statements
         </a>
+        <a href="{{ route('hospital.communications.index') }}" 
+           class="flex items-center justify-between px-3 py-2 rounded-sm {{ $active === 'communications' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">
+            <span>Platform Communications</span>
+            @php
+                $unreadCommsCount = 0;
+                if ($currentOrg) {
+                    $unreadCommsCount = \App\Models\CommunicationThread::where('status', 'open')
+                        ->where(function ($q) use ($currentOrg) {
+                            $q->where('recipient_organization_id', $currentOrg->id)
+                              ->orWhere('sender_organization_id', $currentOrg->id)
+                              ->orWhere('recipient_type', 'all_hospitals')
+                              ->orWhere('recipient_type', 'all_partners');
+                        })->count();
+                }
+            @endphp
+            @if ($unreadCommsCount > 0)
+                <span class="px-1.5 py-0.5 text-[10px] font-bold bg-[#167C78] text-white rounded-full">
+                    {{ $unreadCommsCount }}
+                </span>
+            @endif
+        </a>
         <a href="{{ route('hospital.team.index') }}" 
            class="block px-3 py-2 rounded-sm {{ $active === 'team' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">
             Team & Access Governance

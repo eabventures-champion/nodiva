@@ -489,6 +489,17 @@
                                             @endif
                                         @endif
 
+                                        <!-- Direct Communication Button -->
+                                        @if (! $isPlatformOrg)
+                                            <a href="{{ route('ops.communications.create', ['partner_id' => $partner->id]) }}"
+                                               title="Send Communication to {{ $partner->name }} Administrator(s)"
+                                               class="p-1.5 bg-[#E8F0EF] hover:bg-[#167C78] border border-[#167C78]/30 text-[#167C78] hover:text-white rounded-xs transition shadow-2xs flex items-center justify-center group">
+                                                <svg class="w-4 h-4 text-[#167C78] group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                                </svg>
+                                            </a>
+                                        @endif
+
                                         <!-- Impersonate Primary Administrator (CTO Privilege) -->
                                         @if ($isCto && $leadUser && auth()->id() !== $leadUser->id)
                                             <form method="POST" action="{{ route('ops.impersonate.user', $leadUser) }}" class="inline">

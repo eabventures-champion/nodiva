@@ -80,6 +80,10 @@ final class SpecimenCustody
     {
         $actor->authorize('specimens.dispatch');
 
+        if (! $order->laboratory_id || $order->status === OrderStatus::Matching) {
+            throw new DomainException("Cannot dispatch specimens for order [{$order->reference}]: A fulfilling partner laboratory must claim or be assigned to the referral before courier dispatch.");
+        }
+
         return DB::transaction(function () use ($order, $dispatchData, $actor) {
             $dispatch = Dispatch::query()->create([
                 'referral_order_id' => $order->id,

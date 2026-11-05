@@ -1,4 +1,4 @@
-@props(['active' => 'dashboard'])
+@props(['active' => 'dashboard', 'organization' => null])
 
 <aside class="w-64 flex-shrink-0 bg-white border-r border-[#D5DEDF] flex flex-col justify-between py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto self-start">
     <nav class="space-y-1 px-4 text-xs font-semibold">
@@ -21,6 +21,28 @@
         <a href="{{ route('corporate.invoices.index') }}" 
            class="block px-3 py-2 rounded-sm {{ $active === 'billing' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">
             Program Invoices
+        </a>
+        <a href="{{ route('corporate.communications.index') }}" 
+           class="flex items-center justify-between px-3 py-2 rounded-sm {{ $active === 'communications' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">
+            <span>Platform Communications</span>
+            @php
+                $corpOrg = auth()->user()?->currentMembership?->organization ?? auth()->user()?->activeMemberships()->first()?->organization;
+                $corpCommsCount = 0;
+                if ($corpOrg) {
+                    $corpCommsCount = \App\Models\CommunicationThread::where('status', 'open')
+                        ->where(function ($q) use ($corpOrg) {
+                            $q->where('recipient_organization_id', $corpOrg->id)
+                              ->orWhere('sender_organization_id', $corpOrg->id)
+                              ->orWhere('recipient_type', 'all_corporates')
+                              ->orWhere('recipient_type', 'all_partners');
+                        })->count();
+                }
+            @endphp
+            @if ($corpCommsCount > 0)
+                <span class="px-1.5 py-0.5 text-[10px] font-bold bg-[#167C78] text-white rounded-full">
+                    {{ $corpCommsCount }}
+                </span>
+            @endif
         </a>
         <a href="{{ route('corporate.team.index') }}" 
            class="block px-3 py-2 rounded-sm {{ $active === 'team' ? 'bg-[#E8F0EF] text-[#167C78] font-bold' : 'text-[#61727D] hover:bg-[#F5F3ED] hover:text-[#172A35]' }}">
