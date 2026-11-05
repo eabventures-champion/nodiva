@@ -72,6 +72,13 @@
         </span>
     </button>
 
+    <!-- Mobile Backdrop -->
+    <div x-show="open" 
+         x-cloak
+         @click="open = false" 
+         style="display: none;"
+         class="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs sm:hidden"></div>
+
     <!-- Dropdown Menu -->
     <div x-show="open" 
          @click.away="open = false" 
@@ -83,38 +90,45 @@
          x-transition:leave-start="opacity-100 transform scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 transform scale-95 -translate-y-1"
          style="display: none;"
-         class="absolute right-0 mt-2 w-80 sm:w-96 md:w-[420px] bg-white border border-[#D5DEDF] shadow-xl rounded-sm z-50 text-[#172A35] overflow-hidden">
+         class="fixed inset-x-2 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 w-auto sm:w-96 md:w-[420px] max-w-[calc(100vw-1rem)] bg-white border border-[#D5DEDF] shadow-2xl rounded-sm z-50 text-[#172A35] overflow-hidden flex flex-col max-h-[calc(100vh-5rem)]">
         
         <!-- Header -->
-        <div class="px-4 py-3 bg-[#102A36] text-white flex items-center justify-between border-b border-[#193B49]">
-            <div class="flex items-center gap-2">
-                <span class="p-1 bg-[#167C78]/25 text-teal-300 rounded-xs">
+        <div class="px-3.5 py-2.5 bg-[#102A36] text-white flex items-center justify-between border-b border-[#193B49] flex-shrink-0">
+            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <span class="p-1 bg-[#167C78]/25 text-teal-300 rounded-xs flex-shrink-0">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                 </span>
-                <span class="font-bold text-xs uppercase tracking-wider text-[#F5F3ED]">Notifications</span>
+                <span class="font-bold text-xs uppercase tracking-wider text-[#F5F3ED] truncate">Notifications</span>
                 <span x-show="unreadCount > 0" 
                       x-text="unreadCount + ' new'" 
-                      class="text-[10px] font-mono font-bold bg-[#167C78] text-white px-2 py-0.5 rounded-full shadow-2xs"></span>
+                      class="text-[9px] sm:text-[10px] font-mono font-bold bg-[#167C78] text-white px-1.5 sm:px-2 py-0.5 rounded-full shadow-2xs flex-shrink-0"></span>
             </div>
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-shrink-0">
                 <button type="button" 
                         @click="markAllRead()" 
                         x-show="unreadCount > 0"
                         style="display: none;"
-                        class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D5DEDF] hover:text-white bg-[#193B49]/80 hover:bg-[#193B49] border border-[#D5DEDF]/20 hover:border-[#167C78] rounded-xs transition inline-flex items-center gap-1 shadow-2xs cursor-pointer">
+                        class="px-2 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#D5DEDF] hover:text-white bg-[#193B49]/80 hover:bg-[#193B49] border border-[#D5DEDF]/20 hover:border-[#167C78] rounded-xs transition inline-flex items-center gap-1 shadow-2xs cursor-pointer">
                     <svg class="w-3 h-3 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Mark all read</span>
+                    <span>Mark read</span>
+                </button>
+                <button type="button" 
+                        @click="open = false" 
+                        class="sm:hidden p-1 text-[#D5DEDF] hover:text-white rounded-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
                 </button>
             </div>
         </div>
 
         <!-- Notification List -->
-        <div class="max-h-96 overflow-y-auto divide-y divide-[#D5DEDF]/50">
+        <div class="overflow-y-auto divide-y divide-[#D5DEDF]/50 flex-grow max-h-[60vh] sm:max-h-96">
             <template x-if="activeNotifications.length === 0">
                 <div class="p-8 text-center space-y-2">
                     <div class="w-10 h-10 mx-auto rounded-full bg-[#E8F0EF] text-[#167C78] flex items-center justify-center">

@@ -89,29 +89,37 @@
                 </form>
             @endif
 
-            <!-- Institutional Notification Bell -->
-            <x-notification-bell :organization="$organization ?? null" />
+            <!-- Institutional Notification Bell:
+                 Mobile: order-2 (far right, replacing the logout icon)
+                 Desktop: order-1 (sits before profile)
+            -->
+            <div class="order-2 sm:order-1">
+                <x-notification-bell :organization="$organization ?? null" />
+            </div>
 
+            <!-- Profile Badge:
+                 Mobile: order-1
+                 Desktop: order-2
+            -->
             <a href="{{ route('profile.show') }}" 
                title="View & Edit Institutional Profile"
-               class="flex items-center space-x-1.5 sm:space-x-2 bg-[#193B49] hover:bg-[#167C78] px-2 sm:px-3 py-1.5 border border-[#D5DEDF]/20 hover:border-[#167C78] text-[#D5DEDF] hover:text-white transition group shadow-sm text-xs">
+               class="order-1 sm:order-2 flex items-center space-x-1.5 sm:space-x-2 bg-[#193B49] hover:bg-[#167C78] px-2 sm:px-3 py-1.5 border border-[#D5DEDF]/20 hover:border-[#167C78] text-[#D5DEDF] hover:text-white transition group shadow-sm text-xs">
                 <span class="w-2 h-2 rounded-full bg-[#167C78] group-hover:bg-emerald-300 flex-shrink-0"></span>
-                <span class="font-mono font-medium tracking-tight truncate max-w-[80px] sm:max-w-[140px] md:max-w-none">
+                <span class="font-mono font-medium tracking-tight truncate max-w-[85px] sm:max-w-[140px] md:max-w-none">
                     {{ auth()->user()->job_title ?? auth()->user()->name }}
                 </span>
                 <svg class="w-3.5 h-3.5 text-[#A2B7C1] group-hover:text-white opacity-80 group-hover:opacity-100 transition hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
             </a>
-            <form method="POST" action="/logout" class="inline">
+
+            <!-- Desktop Sign Out: order-3 (Hidden on mobile; on mobile, Sign Out is in the sidebar drawer) -->
+            <form method="POST" action="/logout" class="order-3 hidden sm:inline">
                 @csrf
                 <button type="submit" 
-                        class="hover:text-white uppercase font-bold text-[10px] sm:text-[11px] tracking-wider text-[#D5DEDF] px-1.5 sm:px-2 py-1.5 hover:bg-[#193B49] transition"
+                        class="hover:text-white uppercase font-bold text-[10px] sm:text-[11px] tracking-wider text-[#D5DEDF] px-1.5 sm:px-2 py-1.5 hover:bg-[#193B49] transition cursor-pointer"
                         title="Sign out of console">
-                    <span class="hidden sm:inline">Sign Out</span>
-                    <svg class="w-4 h-4 sm:hidden text-[#D5DEDF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
+                    <span>Sign Out</span>
                 </button>
             </form>
         </div>
@@ -156,6 +164,20 @@
 
                 <div class="flex-grow overflow-y-auto">
                     {{ $sidebar }}
+                </div>
+
+                <!-- Mobile Sign Out Button (Pinned at bottom of drawer on mobile/tablet) -->
+                <div class="p-3 border-t border-[#D5DEDF] bg-[#F5F3ED] lg:hidden flex-shrink-0">
+                    <form method="POST" action="/logout" class="w-full m-0">
+                        @csrf
+                        <button type="submit" 
+                                class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-white hover:bg-rose-50 text-[#B42332] hover:text-[#911b27] border border-rose-200 hover:border-rose-300 rounded-sm font-bold text-xs uppercase tracking-wider transition shadow-2xs cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         @endif
