@@ -132,31 +132,58 @@ class TeamController extends Controller
     {
         $this->authorizeAdmin();
 
-        if (! auth()->user()?->isCto()) {
-            abort(403, 'Privilege Denied: Only the Root Chief Technical Officer has the privilege to edit team members and access permissions.');
+        $currentUser = auth()->user();
+        $isCto = (bool) $currentUser?->isCto();
+
+        // Non-CTO team members can ONLY edit their own record
+        if (! $isCto && $membership->user_id !== $currentUser?->id) {
+            abort(403, 'Privilege Denied: Only the Root Chief Technical Officer has the privilege to edit other team members.');
         }
 
         $validated = $request->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+            'job_title' => ['nullable', 'string', 'max:255'],
             'role_id' => ['required', 'exists:roles,id'],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string'],
             'status' => ['required', 'in:active,suspended'],
         ]);
 
-        // 1. The role of the Chief Technical Officer cannot be edited by any other Platform Administrator
-        if ($membership->user->isCto() && auth()->id() !== $membership->user_id) {
-            return back()->with('error', 'Privilege Denied: The Chief Technical Officer role is root-protected and cannot be edited by any other Platform Administrator.');
+        // 1. Update user profile details (Name & Job Title)
+        $user = $membership->user;
+        $userUpdates = [];
+        if (! empty($validated['name'])) {
+            $userUpdates['name'] = trim($validated['name']);
+        }
+        if (isset($validated['job_title'])) {
+            $title = trim($validated['job_title']);
+            // Prevent non-CTO from giving themselves CTO designation
+            if (! $isCto && (str_contains(strtolower($title), 'cto') || str_contains(strtolower($title), 'chief technical officer'))) {
+                return back()->with('error', 'Privilege Denied: The Chief Technical Officer designation is root-protected.');
+            }
+            $userUpdates['job_title'] = $title;
+        }
+        if (! empty($userUpdates)) {
+            $user->update($userUpdates);
         }
 
-        // 2. Prevent self-demotion or self-suspension
-        if ($membership->user_id === auth()->id() && $validated['status'] === 'suspended') {
+        // 2. The role of the Chief Technical Officer cannot be edited by any other user
+        if ($membership->user->isCto() && $currentUser->id !== $membership->user_id) {
+            return back()->with('error', 'Privilege Denied: The Chief Technical Officer role is root-protected and cannot be edited.');
+        }
+
+        // 3. Prevent self-suspension
+        if ($membership->user_id === $currentUser->id && $validated['status'] === 'suspended') {
             return back()->with('error', 'You cannot suspend your own administrative session.');
         }
 
-        $membership->role_id = $validated['role_id'];
-        $membership->permissions = $validated['permissions'] ?? null;
-        $membership->status = $validated['status'];
-        $membership->save();
+        // 4. Update roles & permissions (CTO has full control; non-CTO keeps assigned role/permissions)
+        if ($isCto) {
+            $membership->role_id = $validated['role_id'];
+            $membership->permissions = $validated['permissions'] ?? null;
+            $membership->status = $validated['status'];
+            $membership->save();
+        }
 
         // Audit Log
         $actor = Actor::for(auth()->user(), $this->current->organization());
@@ -167,7 +194,7 @@ class TeamController extends Controller
             'permissions' => $membership->permissions,
         ], 'success', $actor);
 
-        return back()->with('success', "Access permissions updated for {$membership->user->name}.");
+        return back()->with('success', "Details and access permissions updated for {$membership->user->name}.");
     }
 
     public function destroy(OrganizationMembership $membership)
