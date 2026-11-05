@@ -132,6 +132,10 @@ class TeamController extends Controller
     {
         $this->authorizeAdmin();
 
+        if (! auth()->user()?->isCto()) {
+            abort(403, 'Privilege Denied: Only the Root Chief Technical Officer has the privilege to edit team members and access permissions.');
+        }
+
         $validated = $request->validate([
             'role_id' => ['required', 'exists:roles,id'],
             'permissions' => ['nullable', 'array'],
@@ -147,11 +151,6 @@ class TeamController extends Controller
         // 2. Prevent self-demotion or self-suspension
         if ($membership->user_id === auth()->id() && $validated['status'] === 'suspended') {
             return back()->with('error', 'You cannot suspend your own administrative session.');
-        }
-
-        // 3. Only the Chief Technical Officer has the privilege to deactivate and suspend accounts
-        if ($validated['status'] === 'suspended' && ! auth()->user()->isCto()) {
-            return back()->with('error', 'Privilege Denied: Only the Chief Technical Officer has the privilege to deactivate and suspend accounts.');
         }
 
         $membership->role_id = $validated['role_id'];
@@ -176,8 +175,8 @@ class TeamController extends Controller
         $this->authorizeAdmin();
 
         $currentUser = auth()->user();
-        if (! $currentUser?->isCto() && ! $currentUser?->isPlatformAdmin()) {
-            abort(403, 'Privilege Denied: Only the Chief Technical Officer / Platform Administrator has the privilege to remove or delete team members.');
+        if (! $currentUser?->isCto()) {
+            abort(403, 'Privilege Denied: Only the Root Chief Technical Officer has the privilege to remove or delete team members.');
         }
 
         if ($membership->user->isCto() || $membership->user->email === 'admin@nodiva.com') {
