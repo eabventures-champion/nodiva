@@ -1,16 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="overflow-x-hidden max-w-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'NODIVA Network Workspace' }}</title>
-    <style>[x-cloak] { display: none !important; }</style>
+    <style>
+        [x-cloak] { display: none !important; }
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+            position: relative;
+            -webkit-text-size-adjust: 100%;
+        }
+    </style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body x-data="{ mobileNavOpen: false }" class="bg-[#F5F3ED] text-[#172A35] antialiased min-h-screen flex flex-col font-sans">
+<body x-data="{ mobileNavOpen: false }" 
+      :class="{ 'overflow-hidden': mobileNavOpen }"
+      class="bg-[#F5F3ED] text-[#172A35] antialiased min-h-screen flex flex-col font-sans w-full max-w-full overflow-x-hidden">
     <!-- Top Persistent Institutional Navigation (Fixed) -->
-    <header class="fixed top-0 left-0 right-0 h-14 bg-[#102A36] text-white border-b border-[#193B49] flex items-center justify-between px-3 sm:px-6 z-50 shadow-sm flex-shrink-0">
+    <header class="fixed top-0 left-0 right-0 h-14 bg-[#102A36] text-white border-b border-[#193B49] flex items-center justify-between px-3 sm:px-6 z-50 shadow-sm flex-shrink-0 w-full max-w-full overflow-hidden">
         @if (session()->has('impersonated_by'))
             <div class="h-1 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 w-full absolute top-0 left-0 z-50"></div>
         @endif
@@ -107,7 +118,7 @@
         </div>
     </header>
 
-    <div class="flex-grow flex pt-14 min-h-screen relative">
+    <div class="flex-grow flex pt-14 min-h-screen relative w-full max-w-full overflow-x-hidden">
         @if (isset($sidebar))
             <!-- Mobile Backdrop Overlay -->
             <div x-show="mobileNavOpen" 
@@ -124,7 +135,7 @@
 
             <!-- Responsive Sidebar Drawer: Fixed Off-Canvas on Mobile (<lg), Sticky on Desktop (>=lg) -->
             <div class="fixed inset-y-0 left-0 z-50 pt-14 w-64 bg-white transform transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:pt-0 lg:translate-x-0 lg:flex-shrink-0 flex flex-col"
-                 :class="mobileNavOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'"
+                 :class="mobileNavOpen ? 'translate-x-0 shadow-2xl visible pointer-events-auto' : '-translate-x-full invisible pointer-events-none lg:visible lg:pointer-events-auto lg:translate-x-0'"
                  @click="if ($event.target.closest('a')) mobileNavOpen = false"
                  @keydown.escape.window="mobileNavOpen = false">
                 
@@ -147,9 +158,9 @@
             </div>
         @endif
 
-        <!-- Main Workspace View -->
-        <main class="flex-grow p-3.5 sm:p-6 lg:p-8 bg-[#F5F3ED] overflow-y-auto w-full min-w-0">
-            <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Main Workspace View (Locked Horizontal Scrolling) -->
+        <main class="flex-grow p-3.5 sm:p-6 lg:p-8 bg-[#F5F3ED] overflow-y-auto overflow-x-hidden w-full max-w-full min-w-0">
+            <div class="max-w-6xl mx-auto space-y-6 w-full max-w-full min-w-0 overflow-x-hidden">
                 @if (session('success'))
                     <div class="p-3 bg-[#247451]/10 border border-[#247451]/30 text-xs font-semibold text-[#247451] flex items-center gap-2">
                         <svg class="w-4 h-4 text-[#247451] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

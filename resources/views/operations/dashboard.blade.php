@@ -55,15 +55,13 @@
         </div>
 
     <!-- Network Active Orders Table -->
-    <div class="bg-white border border-[#D5DEDF]">
+    <div class="bg-white border border-[#D5DEDF] overflow-hidden">
         <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#D5DEDF] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
             <h2 class="text-xs font-bold text-[#102A36] uppercase tracking-wider">Live Network Referral Activity</h2>
             <span class="text-[11px] sm:text-xs text-[#61727D]">Pseudonymized operational view (Zero PII leakage)</span>
         </div>
-            <span class="text-xs text-[#61727D]">Pseudonymized operational view (Zero PII leakage)</span>
-        </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto w-full touch-pan-x">
             <table class="w-full text-left text-xs">
                 <thead class="bg-[#F5F3ED] border-b border-[#D5DEDF] text-[#61727D] uppercase font-semibold">
                     <tr>
